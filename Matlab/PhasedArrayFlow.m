@@ -1,8 +1,8 @@
 %% Parameters:
 clear
+set(0, 'DefaultFigureWindowStyle', 'docked');
 
 params = genParams();
-
 M = params.M;
 carrierFreq = params.carrierFreq;
 c = params.c;
@@ -13,6 +13,7 @@ T = params.T;
 t = params.t;
 N = params.N;
 SNR = params.SNR;
+SIR = params.SIR;
 SINR = params.SINR;
 numInt = params.numInt;
 intMode = params.intMode;
@@ -23,7 +24,7 @@ interferenceAngle = params.interferenceAngle;
 %% Simulate signals:
 
 [SoI, SoA, noise] = simSignals(params);
-
+signalPower = mean(abs(SoI).^2);
 
 %% Phased Array Flow
 
@@ -42,9 +43,13 @@ rxSignal = x + rxInt;
 mvdrBeamFormer = MyMVDRBeamFormer(ula_array, inputAngle, carrierFreq);
 
 %% get y using beamformers:
-[covMatrix , wMVDR] = mvdrBeamFormer.mvdrTrain(rxSignal, rxInt);
+[covMatrix , wMVDR] = mvdrBeamFormer.mvdrTrain(rxInt);
 yMVDR = mvdrBeamFormer.mvdrBeamFormer(rxSignal);
 
+% calc SNR at output
+noiseTemp = abs(SoI) - abs(yMVDR);
+noisePower = mean(abs(noiseTemp).^2);
+outSNR = 10*log10(signalPower/noisePower);
 %% plots:
 figure;
 plot(t, abs(yMVDR))
