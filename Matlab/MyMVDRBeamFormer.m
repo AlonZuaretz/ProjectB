@@ -28,16 +28,11 @@ classdef MyMVDRBeamFormer < handle
             c = 3e8;
             phIncr = 2*pi*d*obj.CarrierFreq / c;
             
-            steeringVec = exp(-1j * phIncr * (0:M-1).' * sin(theta));
+            steeringVec = exp(-1j * phIncr * (0:M-1).' * sin(deg2rad(theta)));
         end
 
-        function varargout = mvdrTrain(obj, signal, varargin)
-            if ~isempty(varargin{1}) %MVDR
-                interference = varargin{1};
-                R = interference' * interference;
-            else %MPDR
-                R = signal' * signal;
-            end
+        function varargout = mvdrTrain(obj, interference)
+            R = interference' * interference;
             obj.CovarianceMatrix = R;
             w = obj.calcWeights();
             varargout{1} = R;
