@@ -26,9 +26,9 @@ classdef MyMVDRBeamFormer < handle
             d = obj.Array.ElementSpacing;
             theta = obj.DesiredDirection;
             c = 3e8;
-            phIncr = 2*pi*d*obj.CarrierFreq / c;
+            phIncr = 2*pi*d*obj.CarrierFreq * sin(deg2rad(theta)) / c;
             
-            steeringVec = exp(-1j * phIncr * (0:M-1).' * sin(deg2rad(theta)));
+            steeringVec = exp(-1j * phIncr * (0:M-1).' );
         end
 
         function varargout = mvdrTrain(obj, interference)

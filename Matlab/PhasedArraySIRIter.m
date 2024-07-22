@@ -32,13 +32,13 @@ mvdrBeamFormer = MyMVDRBeamFormer(ula_array, inputAngle, carrierFreq);
 x = collectPlaneWave(ula_array, SoI, inputAngle, carrierFreq);
 
 %% iterate over SNR's:
-inSNRs = inf;
-outSNRs = zeros(size(inSNRs));
+SIRs = -60:60;
+outSNRs = zeros(size(SIRs));
 signalPower = mean(abs(SoI).^2);
 
-for i = 1:length(inSNRs)
-    snr = inSNRs(i);
-    params.SIR = snr;
+for i = 1:length(SIRs)
+    sir = SIRs(i);
+    params.SIR = sir;
 
     % Train mvdr using noise interferences:
     params.intMode = 'noise';
@@ -56,14 +56,14 @@ for i = 1:length(inSNRs)
     yMVDR = mvdrBeamFormer.mvdrBeamFormer(rxSignal);
 
     % calc SNR at output
-    noiseTemp = abs(SoI) - abs(yMVDR);
+    noiseTemp = SoI - yMVDR;
     noisePower = mean(abs(noiseTemp).^2);
     outSNRs(i) = 10*log10(signalPower/noisePower);
 end
 
 % plots:
 figure;
-plot(t, abs(yMVDR))
+plot(t, [abs(yMVDR), abs(SoI)])
 xlim([0, 2/carrierFreq])
 legend('MVDR')
 
@@ -72,8 +72,12 @@ pattern(ula_array,carrierFreq,-180:180,0,'Weights',wMVDR,'Type','directivity',..
     'PropagationSpeed',c,...
     'CoordinateSystem','rectangular');
 axis([-90 90 -80 20]);
-if length(inSNRs) > 1
+
+if length(SIRs) > 1
     figure;
-    plot(inSNRs, outSNRs);
+    plot(SIRs, outSNRs);
     grid('on')
+    xlabel('SIR [dB]')
+    ylabel('SNR [dB]')
+    title('output SNR vs SIR for fixed input SNR')
 end
