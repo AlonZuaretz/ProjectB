@@ -20,6 +20,9 @@ intMode = params.intMode;
 inputAngle = params.inputAngle;
 interferenceAngle = params.interferenceAngle;
 
+ula_array = phased.ULA('NumElements',M,'ElementSpacing',d);
+mvdrBeamFormer = MyMVDRBeamFormer(ula_array, inputAngle, carrierFreq);
+
 
 ula_array = phased.ULA('NumElements',M,'ElementSpacing',d);
 A = zeros(M, numInt);
@@ -30,11 +33,13 @@ for i = 1:numInt
     steeringVec = exp(-1j * phIncr * (0:M-1).' );
     x = 1;
     y = collectPlaneWave(ula_array, x, interferenceAngle(:,i), carrierFreq);
-    a = (y / y(1)).';
+    a = (y / y(1));
 A(:,i) = a;
 end
 
-R = A * A' + 1e-6 * eye(M,M);
+A = A.' ; 
+
+R = (A' * A)/numInt;
 
 
 

@@ -9,7 +9,6 @@ classdef MyMVDRBeamFormer < handle
         CarrierFreq
         SteeringVector % Array steering vector
     end
-
     methods
         % Constructor to initialize the MVDR Beamformer
         function obj = MyMVDRBeamFormer(array, desiredDOA, carrierFreq)
@@ -31,8 +30,15 @@ classdef MyMVDRBeamFormer < handle
             steeringVec = exp(-1j * phIncr * (0:M-1).' );
         end
 
-        function varargout = mvdrTrain(obj, interference)
-            R = interference' * interference;
+        function varargout = mvdrTrain(obj, signal, varargin)
+            N = size(signal,1);
+            if ~isempty(varargin) % diagonal loading
+                lambda = varargin{1};
+                d = size(signal,2);
+                R = (signal' * signal + lambda * eye(d));
+            else
+                R = (signal' * signal);
+            end
             obj.CovarianceMatrix = R;
             w = obj.calcWeights();
             varargout{1} = R;
@@ -41,7 +47,7 @@ classdef MyMVDRBeamFormer < handle
 
         function y = mvdrBeamFormer(obj, signal)
             % apply weights over the signal:
-            y = signal * conj(obj.WeightsVector);
+            y = signal * obj.WeightsVector;
         end
 
         function w = calcWeights(obj)
@@ -54,10 +60,8 @@ classdef MyMVDRBeamFormer < handle
             elseif nominator == 0
                 error('Nominator in weight calculation is zero')
             end
-            w = conj(nominator / denominator); % don't know why
+            w = nominator / denominator;
             obj.WeightsVector = w;
         end
-
-
     end
 end

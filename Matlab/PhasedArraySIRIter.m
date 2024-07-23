@@ -32,7 +32,7 @@ mvdrBeamFormer = MyMVDRBeamFormer(ula_array, inputAngle, carrierFreq);
 x = collectPlaneWave(ula_array, SoI, inputAngle, carrierFreq);
 
 %% iterate over SNR's:
-SIRs = -60:60;
+SIRs = -20:100;
 outSNRs = zeros(size(SIRs));
 signalPower = mean(abs(SoI).^2);
 
@@ -45,30 +45,29 @@ for i = 1:length(SIRs)
     [~, SoA_noise, ~] = simSignals(params);
     interference = collectPlaneWave(ula_array, SoA_noise, interferenceAngle, carrierFreq);
     rxInt = interference + noise;
-    [~, wMVDR] = mvdrBeamFormer.mvdrTrain(rxInt);
+    % rxSignal = x + rxInt;
+    [RMVDR, wMVDR] = mvdrBeamFormer.mvdrTrain(rxInt); %% MPDR or MVDR
     
     % Apply mvdr beamformer on correlated interferences
     params.intMode = 'correlated';
     [~, SoA_corr, ~] = simSignals(params);
     interference = collectPlaneWave(ula_array, SoA_corr, interferenceAngle, carrierFreq);
-    rxInt = interference + noise;
+    rxInt =  interference + noise;
     rxSignal = x + rxInt;
     yMVDR = mvdrBeamFormer.mvdrBeamFormer(rxSignal);
 
     % calc SNR at output
-    noiseTemp = SoI - yMVDR;
-    noisePower = mean(abs(noiseTemp).^2);
-    outSNRs(i) = 10*log10(signalPower/noisePower);
+    outSNRs(i) = 10*log10( abs(norm(wMVDR' * x.')^2  / (wMVDR' * RMVDR * wMVDR)));
 end
 
 % plots:
 figure;
 plot(t, [abs(yMVDR), abs(SoI)])
 xlim([0, 2/carrierFreq])
-legend('MVDR')
+legend('MVDR', 'SoI')
 
 figure;
-pattern(ula_array,carrierFreq,-180:180,0,'Weights',wMVDR,'Type','directivity',...
+pattern(ula_array,carrierFreq,-180:180,0,'Weights',conj(wMVDR),'Type','directivity',...
     'PropagationSpeed',c,...
     'CoordinateSystem','rectangular');
 axis([-90 90 -80 20]);

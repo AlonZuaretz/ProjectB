@@ -29,7 +29,7 @@ function [SoI, SoA, noise] = simSignals(params)
         sigma = sqrt(intPower / numInt);
         SoA = (sigma/sqrt(2)) * (randn(size(SoA)) + 1i*randn(size(SoA)));
     elseif strcmp(intMode, 'correlated')
-        randPhase = zeros(1, numInt); %-pi + 2*pi*rand(1,numInt);
+        randPhase = -pi + 2*pi*rand(1,numInt);
         A = sqrt((2 * intPower) / numInt^2);
         SoA =  A * cos(2*pi*carrierFreq*t + randPhase);
     end  
