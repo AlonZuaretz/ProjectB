@@ -19,8 +19,8 @@ function paramsOut = genParams(varargin)
     intMode = 'noise'; % interference mode (noise or correlated)
     
     numInt = 2;
-    SNR = 40; %dB
-    SIR = -30; %dB
+    SNR = 0; %dB
+    SIR = -20; %dB
     if nargin == 1
         SNR = varargin{1};
     end
