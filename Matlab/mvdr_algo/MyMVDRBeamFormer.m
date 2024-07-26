@@ -11,7 +11,10 @@ classdef MyMVDRBeamFormer < handle
     end
     methods
         % Constructor to initialize the MVDR Beamformer
-        function obj = MyMVDRBeamFormer(array, desiredDOA, carrierFreq)
+        function obj = MyMVDRBeamFormer(params)
+            array = params.ula_array;
+            desiredDOA = params.inputAngle;
+            carrierFreq = params.carrierFreq;
             obj.Array = array;
             obj.CovarianceMatrix = zeros(obj.Array.NumElements);
             obj.WeightsVector = zeros(obj.Array.NumElements,1);
@@ -20,13 +23,16 @@ classdef MyMVDRBeamFormer < handle
             obj.SteeringVector = obj.calcSteeringVec();
         end
 
-        function steeringVec = calcSteeringVec(obj)
+        function steeringVec = calcSteeringVec(obj,varargin)
+            if ~isempty(varargin{1})
+                theta = varargin{1};
+            else
+                theta = obj.DesiredDirection;
+            end
             M = obj.Array.NumElements;
             d = obj.Array.ElementSpacing;
-            theta = obj.DesiredDirection;
             c = 3e8;
-            phIncr = 2*pi*d*obj.CarrierFreq * sin(deg2rad(theta)) / c;
-            
+            phIncr = 2*pi*d*obj.CarrierFreq * sind(theta) / c;
             steeringVec = exp(-1j * phIncr * (0:M-1).' );
         end
 
@@ -35,9 +41,9 @@ classdef MyMVDRBeamFormer < handle
             if ~isempty(varargin) % diagonal loading
                 lambda = varargin{1};
                 d = size(signal,2);
-                R = (signal' * signal + lambda * eye(d));
+                R = (signal' * signal)/N + lambda * eye(d);
             else
-                R = (signal' * signal);
+                R = (signal' * signal)/N;
             end
             obj.CovarianceMatrix = R;
             w = obj.calcWeights();

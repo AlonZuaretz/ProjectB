@@ -9,7 +9,7 @@ function paramsOut = genParams(varargin)
     % Fix parameter values:
     M = 4; % Number of array elements
     carrierFreq = 1e4; % [ Hz ]
-    c = 3e8; %  light speed in [ m/s ]
+    c = physconst('LightSpeed'); %  light speed in [ m/s ]
     lambda = c/carrierFreq; %  wave length in [ m ]
     d = lambda/2; % distance between array elements in [ m ]
     fs = 1e6; % sampling frequency
