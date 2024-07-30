@@ -10,6 +10,7 @@ function paramsOut = randGenParams()
     M = 4; % Number of array elements
     carrierFreq = 28e9; % [ Hz ]
     effCarrierFreq = 0;
+    inputPower = 1;
     c = physconst('LightSpeed'); %  light speed in [ m/s ]
     lambda = c/carrierFreq; %  wave length in [ m ]
     d = lambda/2; % distance between array elements in [ m ]
@@ -22,16 +23,28 @@ function paramsOut = randGenParams()
     Topt = Nopt/fsBB;
     topt = (0:Nopt-1).' / fsBB;
 
+    % Create filters for different noise bandwidths:
+    lpFilter = cell(6,1);
+    for i = 1:6
+        lpFilter{i} = designfilt('lowpassfir', 'FilterOrder', 20, ...
+                          'CutoffFrequency', i * 1e7/2, ...
+                          'SampleRate', fsBB);
+    end
+ 
+
     % Changing parameters
     T = []; % total signal duration
     t = []; % signal time vector
     N = []; % signal number of samples
 
 
-    intMode = ''; % interference mode (noise or correlated)
+    intMode = ''; % interference mode (filtNoise or CW)
+    inputMode = ''; % signal of interest mode (filtNose or CW)
     numInt = []; % number of interfereres
     SNR = []; % signal to noise ratio in dB
     SIR = []; % signal to interference ratio in dB
+    intBW = [];
+    inputBW = [];
 
 
     % angles:
@@ -47,6 +60,7 @@ function paramsOut = randGenParams()
     paramsOut.c = c;
     paramsOut.lambda = lambda;
     paramsOut.d = d;
+    paramsOut.inputPower = inputPower;
     paramsOut.fsPB = fsPB;
     paramsOut.fsBB = fsBB;
     paramsOut.ula_array = ula_array;
@@ -62,9 +76,13 @@ function paramsOut = randGenParams()
     paramsOut.SIR = SIR;
     paramsOut.numInt = numInt;
     paramsOut.intMode = intMode;
+    paramsOut.inputMode = inputMode;
     paramsOut.inputAngle = inputAngle;
+    paramsOut.intBW = intBW;
+    paramsOut.inputBW = inputBW;
     paramsOut.interferenceAngle = interferenceAngle;
     paramsOut.inputSteeringVector = InputSteeringVector;
+    paramsOut.lpFilter = lpFilter;
 
     
 end

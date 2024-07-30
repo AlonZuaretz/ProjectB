@@ -5,35 +5,42 @@ classdef MyMVDRBeamFormer < handle
         Array % Array object
         CovarianceMatrix % Covariance matrix of the array inputs
         WeightsVector
-        DesiredDirection % Desired direction of arrival (DOA) for the beamforming
+        desiredDOA % Desired direction of arrival (DOA) for the beamforming
         CarrierFreq
         SteeringVector % Array steering vector
+        c % speed of light
     end
     methods
         % Constructor to initialize the MVDR Beamformer
         function obj = MyMVDRBeamFormer(params)
-            array = params.ula_array;
             desiredDOA = params.inputAngle;
             carrierFreq = params.carrierFreq;
-            obj.Array = array;
+
+            obj.Array =  params.ula_array;
             obj.CovarianceMatrix = zeros(obj.Array.NumElements);
             obj.WeightsVector = zeros(obj.Array.NumElements,1);
-            obj.DesiredDirection = desiredDOA(1);
+            obj.desiredDOA = desiredDOA;
             obj.CarrierFreq = carrierFreq;
+            obj.c = physconst('LightSpeed');
             obj.SteeringVector = obj.calcSteeringVec();
         end
 
         function steeringVec = calcSteeringVec(obj,varargin)
-            if ~isempty(varargin{1})
+            if ~isempty(varargin)
                 theta = varargin{1};
             else
-                theta = obj.DesiredDirection;
+                theta = obj.desiredDOA;
             end
-            M = obj.Array.NumElements;
-            d = obj.Array.ElementSpacing;
-            c = 3e8;
-            phIncr = 2*pi*d*obj.CarrierFreq * sind(theta) / c;
-            steeringVec = exp(-1j * phIncr * (0:M-1).' );
+            
+            % privHstv = phased.SteeringVector('SensorArray',obj.Array,...
+            % 'PropagationSpeed',obj.c,'IncludeElementResponse',false);
+            % tic
+            % steeringVec = step(privHstv, obj.CarrierFreq, theta);
+            % toc
+
+            % this is 5-6 times faster than the above:
+            steeringVec = phased.internal.steeringvec(obj.Array.getElementPosition,...
+                obj.CarrierFreq,obj.c, theta, 0);
         end
 
         function varargout = mvdrTrain(obj, signal, varargin)
@@ -41,9 +48,9 @@ classdef MyMVDRBeamFormer < handle
             if ~isempty(varargin) % diagonal loading
                 lambda = varargin{1};
                 d = size(signal,2);
-                R = (signal' * signal)/N + lambda * eye(d);
+                R = (signal.' * conj(signal))/N + lambda * eye(d);
             else
-                R = (signal' * signal)/N;
+                R = (signal.' * conj(signal))/N;
             end
             obj.CovarianceMatrix = R;
             w = obj.calcWeights();
@@ -53,7 +60,7 @@ classdef MyMVDRBeamFormer < handle
 
         function y = mvdrBeamFormer(obj, signal)
             % apply weights over the signal:
-            y = signal * obj.WeightsVector;
+            y = signal * conj(obj.WeightsVector);
         end
 
         function w = calcWeights(obj)

@@ -31,20 +31,26 @@ signalPower = mean(abs(SoI).^2);
 % create the phased array
 ula_array = phased.ULA('NumElements',M,'ElementSpacing',d);
 
+% Initialize the MVDR beamformer
+mvdrBeamFormer = MyMVDRBeamFormer(params);
+mvdrBF = phased.MVDRBeamformer('SensorArray',ula_array,...
+    'Direction',inputAngle,'OperatingFrequency',carrierFreq,...
+    'WeightsOutputPort',true);
+% sample signals using array:
 x = collectPlaneWave(ula_array, SoI, inputAngle, carrierFreq);
 interference = collectPlaneWave(ula_array, SoA, interferenceAngle, carrierFreq);
+
 
 rxInt = interference + noise;
 rxSignal = x + rxInt;
 
-%% Define objects:
 
-% Define the MVDR beamformer
-mvdrBeamFormer = MyMVDRBeamFormer(ula_array, inputAngle, carrierFreq);
 
 %% get y using beamformers:
 [covMatrix , wMVDR] = mvdrBeamFormer.mvdrTrain(rxInt);
 yMVDR = mvdrBeamFormer.mvdrBeamFormer(rxSignal);
+mvdrBF.TrainingInputPort = true;
+[yMVDRBF, wMVDRBF] = mvdrBF(rxSignal, rxInt);
 
 % calc SNR at output
 noiseTemp = abs(SoI) - abs(yMVDR);

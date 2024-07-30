@@ -13,10 +13,11 @@ function paramsOut = genParams(varargin)
     lambda = c/carrierFreq; %  wave length in [ m ]
     d = lambda/2; % distance between array elements in [ m ]
     fs = 1e6; % sampling frequency
-    T = 2e-2; % total signal duration
+    T = 2e-4; % total signal duration
     t = (0:1/fs:T-1/fs).';
     N = size(t,1);
     intMode = 'noise'; % interference mode (noise or correlated)
+    ula_array = phased.ULA('NumElements',M,'ElementSpacing',d);
     
     numInt = 2;
     SNR = 0; %dB
@@ -34,7 +35,7 @@ function paramsOut = genParams(varargin)
     SINR = 10*log10(SINR_lin);
     
     % angles:
-    inputAngle = [0;0];
+    inputAngle = [-50;0];
     switch numInt
         case 1
             interferenceAngle = [20;0];
@@ -52,6 +53,7 @@ function paramsOut = genParams(varargin)
     paramsOut.lambda = lambda;
     paramsOut.d = d;
     paramsOut.fs = fs;
+    paramsOut.ula_array = ula_array;
     paramsOut.T = T;
     paramsOut.t = t;
     paramsOut.N = N;

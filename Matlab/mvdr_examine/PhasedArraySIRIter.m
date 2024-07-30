@@ -23,7 +23,7 @@ interferenceAngle = params.interferenceAngle;
 
 % create the phased array amd mvdr object
 ula_array = phased.ULA('NumElements',M,'ElementSpacing',d);
-mvdrBeamFormer = MyMVDRBeamFormer(ula_array, inputAngle, carrierFreq);
+mvdrBeamFormer = MyMVDRBeamFormer(params);
 
 % obtain fixed SoI and noise for the entire run:
 [SoI, ~, noise] = simSignals(params);
@@ -71,7 +71,7 @@ for i = 1:length(SIRs)
     % outSNRs(i) = 10*log10(signalPower/noisePower);
 
     % only works for MVDR: % TODO: understand why and how to fix!
-    outSNRs(i) = 10*log10( abs(norm(wMVDR' * x.')^2  / (wMVDR' * RMVDR * wMVDR) ));
+    outSNRs(i) = 10*log10( abs(norm(wMVDR' * x.')^2  / (wMVDR' * N * RMVDR * wMVDR) ));
 end
 
 % plots:
