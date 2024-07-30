@@ -5,16 +5,6 @@ set(0, 'DefaultFigureWindowStyle', 'docked');
 
 
 
-% SoI should be also filtered white noise %
-% save bandwidth that was used
-
-% add noise in random bandwidth to simsignals.
-% save bandwidth that was used
-
-% -1 in input angle?
-
-% check the produced data to see if it matches the previous mvdr flow
-
 %%
 % fixed parameters:
 params = randGenParams();
@@ -27,9 +17,9 @@ thetaMax = 60; % [deg]
 thetaDist = 10; % [deg]
 
 % changing parameters:
-SNRs = 10:20; % vector of SNR values
-SIRs = -20:2:0; % vector of SIR values
-numInt = 2; % vector of number of interferences
+SNRs = 10:5:50; % vector of SNR values
+SIRs = -20:2.5:30; % vector of SIR values
+numInt = 1; % vector of number of interferences
 
 intMode = ["filtNoise", "CW"]; % TODO : mixture of correlated and non-correlated interferences.
 inputMode = ["filtNoise", "CW"];
@@ -39,29 +29,40 @@ randAnglesNum = 10;
 randReps = 10;
 
 Nreps = numel(SNRs) * numel(SIRs) * numel(numInt) * numel(intMode) * numel(inputMode) * randAnglesNum * randReps
+params.Nreps = Nreps;
 
+save('generatedDataV1\globalParams.mat', 'params');
 
-for i1 = 1:length(SNRs) % iterate through snr values
+N1 = length(SNRs);
+N2 = length(SIRs);
+N3 = length(numInt);
+N4 = length(intMode);
+N5 = length(inputMode);
+N6 = randAnglesNum;
+N7 = randReps;
+h = waitbar(0, 'Please wait... Progress loading');
+
+for i1 = 1:N1 % iterate through snr values
     snr = SNRs(i1);
     params.SNR = snr;
 
-    for i2 = 1:length(SIRs) % iterate throgh sir values
+    for i2 = 1:N2 % iterate throgh sir values
         sir = SIRs(i2);
         params.SIR = sir;
 
-        for i3 = 1:length(numInt) % iterate through number of interferences
+        for i3 = 1:N3 % iterate through number of interferences
             nInt = numInt(i3);
             params.numInt = nInt;
 
-            for i4 = 1:length(intMode) % iterate through modes of interferences
+            for i4 = 1:N4 % iterate through modes of interferences
                 intM = intMode(i4);
                 % params.intMode is updated at i7 for loop
 
-                for i5 = 1:length(inputMode)
+                for i5 = 1:N5
                     inputM = inputMode(i5);
                     % params.inputMode is updated at i7 for loop
 
-                    for i6 = 1:randAnglesNum % iterate through a set of random angles
+                    for i6 = 1:N6 % iterate through a set of random angles
                         
                         % generate avoidance angles:
                         interferenceAngle = randi([thetaMin, thetaMax], numInt, 1);
@@ -88,9 +89,15 @@ for i1 = 1:length(SNRs) % iterate through snr values
                         % For each set of the previous parameters, create a
                         % struct which will hold randReps results
                         RepsStruct = struct();
-                        for i7 = 1:randReps
-                            output = struct();
+                        for i7 = 1:N7
+                            currIter = calcIter(i1, i2, i3, i4, i5, i6, i7, N2 ,N3 ,N4 ,N5 ,N6 ,N7);
+                            seed = currIter;
+                            rng(seed)   
+                            
+                            % loading bar:
+                            waitbar(currIter / Nreps, h, sprintf('Progress: %d%%', floor(currIter / Nreps * 100)));
                             %% optimal MVDR
+                            
                             params.N = params.Nopt;
                             params.T = params.Topt;
                             params.t = params.topt;
@@ -143,14 +150,25 @@ for i1 = 1:length(SNRs) % iterate through snr values
                             % calculate distorted MPDR matrix and coefficients:
                             [RMPDR, wMPDR] = mvdrBeamFormer.mvdrTrain(rxSignal);
     
+                            % Saving procedure:
+                            saveParams = struct();
+                            saveParams.SNR = params.SNR;
+                            saveParams.SIR = params.SIR;
+                            saveParams.numInt = params.numInt;
+                            saveParams.intMode = params.intMode;
+                            saveParams.inputMode = params.inputMode;
+                            saveParams.inputAngle = params.inputAngle;
+                            saveParams.interferenceAngle = params.interferenceAngle;
+                            saveParams.intBW = params.intBW;
+                            saveParams.inputBW = params.inputBW;
+                            saveParams.seed = seed;
 
                             RepsStruct(i7).RMVDR = RMVDR;
                             RepsStruct(i7).wMVDR = wMVDR;
                             RepsStruct(i7).RMPDR = RMPDR;
                             RepsStruct(i7).wMPDR = wMPDR;
-                            RepsStruct(i7).params = params;
-                            RepsStruct(i7).rxSignal = rxSignal;
-                            RepsStruct(i7).rxInt = rxInt;
+                            RepsStruct(i7).params = saveParams;
+
                         end
                             % save data:
                             C = {'generatedDataV1\run', num2str(i1), num2str(i2), num2str(i3), num2str(i4), num2str(i5), num2str(i6)};
@@ -177,7 +195,17 @@ pattern(params.ula_array,params.carrierFreq,-180:180,0,'Weights',wMPDR,'Type','d
     'CoordinateSystem','rectangular');
 
 
+function globalIter = calcIter(i1, i2, i3, i4, i5, i6, i7, N2,N3,N4,N5,N6,N7)
+    globalIter = 1 + (i1-1) * N2 * N3 * N4 * N5 * N6 * N7 ...
+                    + (i2-1) * N3 * N4 * N5 * N6 * N7 ...
+                    + (i3-1) * N4 * N5 * N6 * N7 ...
+                    + (i4-1) * N5 * N6 * N7 ...
+                    + (i5-1) * N6 * N7 ...
+                    + (i6-1) * N7 ...
+                    + (i7-1);
 
+
+end
 
 
 

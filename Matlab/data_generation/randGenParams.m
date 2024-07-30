@@ -22,6 +22,7 @@ function paramsOut = randGenParams()
     Nopt = 2^16;
     Topt = Nopt/fsBB;
     topt = (0:Nopt-1).' / fsBB;
+    Nreps = []; % calculated at dataGenScript
 
     % Create filters for different noise bandwidths:
     lpFilter = cell(6,1);
@@ -45,6 +46,7 @@ function paramsOut = randGenParams()
     SIR = []; % signal to interference ratio in dB
     intBW = [];
     inputBW = [];
+    randSeed = [];
 
 
     % angles:
@@ -66,6 +68,7 @@ function paramsOut = randGenParams()
     paramsOut.ula_array = ula_array;
     paramsOut.gainMatrix = element_gain_mismatch;
     paramsOut.phaseMatrix = element_ang_mismatch;
+    paramsOut.Nreps = Nreps;
     paramsOut.Topt = Topt;
     paramsOut.topt = topt;
     paramsOut.Nopt = Nopt;
@@ -83,6 +86,7 @@ function paramsOut = randGenParams()
     paramsOut.interferenceAngle = interferenceAngle;
     paramsOut.inputSteeringVector = InputSteeringVector;
     paramsOut.lpFilter = lpFilter;
+    paramsOut.randSeed = randSeed;
 
     
 end

@@ -18,6 +18,8 @@ function varargout = randSimSignals(params)
     intBW = params.intBW;
     inputBW = params.inputBW;
     
+    % rng(seed)
+    
     % simulate signal of interest:
     if nargout == 3
         if strcmp(inputMode, 'CW')
@@ -56,7 +58,7 @@ function varargout = randSimSignals(params)
         % randPhase = -pi + 2*pi*rand(1,numInt);
         % A = sqrt((2 * intPower) / numInt^2);
         % SoA =  A * cos(2*pi*(effCarrierFreq)*t + randPhase);
-        
+
         % when effCarrierFreq = 0 :
         A = sqrt(intPower) / numInt;
         SoA =  A * cos(2*pi*(effCarrierFreq)*t);
@@ -70,7 +72,7 @@ function varargout = randSimSignals(params)
             scalingFactor = sqrt(intPower / (currentPower * numInt^2));
             SoA(:,i) =  filteredNoise * scalingFactor;
         end             
-    end  
+    end
     varargout{1} = SoA;
 
     % simulate noise:
