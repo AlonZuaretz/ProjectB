@@ -2,9 +2,9 @@ clear
 set(0, 'DefaultFigureWindowStyle', 'docked');
 
 
-globDir = 'C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV1';
-paramsDir = '\allSIR';
-dataDir = '\allSIR\raw';
+globDir = 'C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV1_new';
+paramsDir = '\lowerSIR';
+dataDir = '\lowerSIR\raw';
 saveParamsDir = [globDir, paramsDir];
 saveDataDir = [globDir, dataDir];
 
@@ -42,7 +42,7 @@ thetaDist = 10; % [deg]
 
 % changing parameters:
 SNRs = 10:5:50; % vector of SNR values
-SIRs = -20:10:30; % vector of SIR values
+SIRs = -50:5:-20; % vector of SIR values
 numInt = 1; % vector of number of interferences
 
 intMode = ["filtNoise", "CW"]; % TODO : mixture of correlated and non-correlated interferences.
@@ -60,7 +60,7 @@ N5 = length(inputMode);
 N6 = randAnglesNum;
 N7 = randReps;
 
-Nreps = N1 * N2 * N3 * N4 * N5 * N6 * N7;
+Nreps = N1 * N2 * N3 * N4 * N5 * N6 * N7
 
 % Additional parameters to save:
 addParams.dtheta = dtheta;
@@ -76,7 +76,7 @@ addParams.randAnglesNum = randAnglesNum;
 addParams.randReps = randReps;
 addParams.Nreps = Nreps;
 
-save([saveParamsDir, '\globalParams.mat'], 'params', 'addParams');
+% save([saveParamsDir, '\globalParams.mat'], 'params', 'addParams');
 
 
 h = waitbar(0, 'Please wait... Progress loading');
@@ -190,15 +190,16 @@ for i1 = 1:N1 % iterate through snr values
     
                             % Saving procedure:
                             saveParams = struct();
-                            saveParams.SNR = params.SNR;
-                            saveParams.SIR = params.SIR;
-                            saveParams.numInt = params.numInt;
-                            saveParams.intMode = params.intMode;
-                            saveParams.inputMode = params.inputMode;
-                            saveParams.inputAngle = params.inputAngle;
-                            saveParams.interferenceAngle = params.interferenceAngle;
-                            saveParams.intBW = params.intBW;
-                            saveParams.inputBW = params.inputBW;
+                            saveParams.N = nSamples;
+                            saveParams.SNR = snr;
+                            saveParams.SIR = sir;
+                            saveParams.numInt = nInt;
+                            saveParams.intMode = cellstr(intM);
+                            saveParams.inputMode = cellstr(inputM);
+                            saveParams.inputAngle = inputAngle;
+                            saveParams.interferenceAngle = interferenceAngle;
+                            saveParams.intBW = intBW;
+                            saveParams.inputBW = inputBW;
                             saveParams.seed = seed;
 
                             RepsStruct(i7).RMVDR = RMVDR;
@@ -209,9 +210,9 @@ for i1 = 1:N1 % iterate through snr values
 
                         end
                             % save data:
-                            C = {[saveDataDir, '\run'], num2str(i1), num2str(i2), num2str(i3), num2str(i4), num2str(i5), num2str(i6)};
-                            filename = strjoin(C, '_');
-                            save([filename, '.mat'], 'RepsStruct');
+                            % C = {[saveDataDir, '\run'], num2str(i1), num2str(i2), num2str(i3), num2str(i4), num2str(i5), num2str(i6)};
+                            % filename = strjoin(C, '_');
+                            % save([filename, '.mat'], 'RepsStruct');
                     end
                 end
             end

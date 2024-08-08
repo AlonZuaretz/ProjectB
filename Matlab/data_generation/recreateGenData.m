@@ -1,6 +1,6 @@
 clear
-load("generatedDataV1\globalParams.mat")
-load("generatedDataV1\run_1_1_1_1_1_1.mat");
+load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV1\allSIR\globalParams.mat")
+load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV1\allSIR\raw\run_1_1_1_1_1_1.mat");
 relData = RepsStruct(2);
 fsBB = params.fsBB;
 

@@ -40,7 +40,6 @@ classdef MyMVDRBeamFormer < handle
 
             % this is 5-6 times faster than the above:
             steeringVec = phased.internal.steeringvec(obj.Array.getElementPosition,...
-                obj.CarrierFreq,obj.c, theta, 0);
         end
 
         function varargout = mvdrTrain(obj, signal, varargin)

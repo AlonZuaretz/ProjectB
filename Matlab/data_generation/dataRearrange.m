@@ -1,5 +1,5 @@
 clear
-files = dir('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV1\allSIR\raw');
+files = dir('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV1_new\lowerSIR\raw');
 files = files(3:end);
 
 N = length(files);
@@ -10,12 +10,12 @@ Yw = zeros(N*numReps,4,1);
 XR = zeros(N*numReps,4,4);
 YR = zeros(N*numReps,4,4);
 
-params = struct('SNR', [], 'SIR', [], 'numInt', [], 'intMode', [], 'inputMode', [], 'inputAngle', [] ...
+params = struct('N', [], 'SNR', [], 'SIR', [], 'numInt', [], 'intMode', [], 'inputMode', [], 'inputAngle', [] ...
     ,'interferenceAngle', [], 'intBW', [], 'inputBW', [], 'seed', []);
 
 
 for f = 1:N
-    load(files(f).name)
+    load([files(f).folder,'\', files(f).name])
     for i = 1:numReps
         Xw((f-1)*numReps + i, :, :) = RepsStruct(i).wMPDR;
         Yw((f-1)*numReps + i, :, :) = RepsStruct(i).wMVDR;
@@ -24,4 +24,4 @@ for f = 1:N
         params((f-1)*numReps + i) = RepsStruct(i).params;
     end
 end
-save('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV1\allSIR\dataForPython.mat', 'Xw', 'XR', 'Yw', 'YR', 'params')
+save('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV1_new\lowerSIR\dataForPython.mat', 'Xw', 'XR', 'Yw', 'YR', 'params')
