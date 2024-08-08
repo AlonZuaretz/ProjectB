@@ -1,11 +1,35 @@
 clear
 set(0, 'DefaultFigureWindowStyle', 'docked');
 
+
+globDir = 'C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV1';
+paramsDir = '\lowSIR';
+dataDir = '\lowSIR\raw';
+saveParamsDir = [globDir, paramsDir];
+saveDataDir = [globDir, dataDir];
+
+% Check if the folder exists
+if ~exist(saveParamsDir, 'dir')
+    mkdir(saveParamsDir);
+    fprintf('Folder "%s" was created.\n', saveParamsDir);
+else
+    % Folder already exists
+    fprintf('Folder "%s" already exists.\n', saveParamsDir);
+end
+
+% Check if the folder exists
+if ~exist(saveDataDir, 'dir')
+    mkdir(saveDataDir);
+    fprintf('Folder "%s" was created.\n', saveDataDir);
+else
+    % Folder already exists
+    fprintf('Folder "%s" already exists.\n', saveDataDir);
+end
+
 %% TODO:
 
-
-
 %%
+
 % fixed parameters:
 params = randGenParams();
 fsBB = params.fsBB;
@@ -18,7 +42,7 @@ thetaDist = 10; % [deg]
 
 % changing parameters:
 SNRs = 10:5:50; % vector of SNR values
-SIRs = -20:2.5:30; % vector of SIR values
+SIRs = -40:5:-10; % vector of SIR values
 numInt = 1; % vector of number of interferences
 
 intMode = ["filtNoise", "CW"]; % TODO : mixture of correlated and non-correlated interferences.
@@ -26,12 +50,7 @@ inputMode = ["filtNoise", "CW"];
 
 % how many times to randomize:
 randAnglesNum = 10;
-randReps = 10;
-
-Nreps = numel(SNRs) * numel(SIRs) * numel(numInt) * numel(intMode) * numel(inputMode) * randAnglesNum * randReps
-params.Nreps = Nreps;
-
-save('generatedDataV1\globalParams.mat', 'params');
+randReps = 20;
 
 N1 = length(SNRs);
 N2 = length(SIRs);
@@ -40,8 +59,27 @@ N4 = length(intMode);
 N5 = length(inputMode);
 N6 = randAnglesNum;
 N7 = randReps;
-h = waitbar(0, 'Please wait... Progress loading');
 
+Nreps = N1 * N2 * N3 * N4 * N5 * N6 * N7;
+
+% Additional parameters to save:
+addParams.dtheta = dtheta;
+addParams.thetaMin = thetaMin;
+addParams.thetaMax = thetaMax;
+addParams.thetaDist = thetaDist;
+addParams.SNRs = SNRs;
+addParams.SIRs = SIRs;
+addParams.numInt = numInt;
+addParams.intMode = intMode;
+addParams.inputMode = inputMode;
+addParams.randAnglesNum = randAnglesNum;
+addParams.randReps = randReps;
+addParams.Nreps = Nreps;
+
+save([saveParamsDir, '\globalParams.mat'], 'params', 'addParams');
+
+
+h = waitbar(0, 'Please wait... Progress loading');
 for i1 = 1:N1 % iterate through snr values
     snr = SNRs(i1);
     params.SNR = snr;
@@ -171,7 +209,7 @@ for i1 = 1:N1 % iterate through snr values
 
                         end
                             % save data:
-                            C = {'generatedDataV1\run', num2str(i1), num2str(i2), num2str(i3), num2str(i4), num2str(i5), num2str(i6)};
+                            C = {[saveDataDir, '\run'], num2str(i1), num2str(i2), num2str(i3), num2str(i4), num2str(i5), num2str(i6)};
                             filename = strjoin(C, '_');
                             save([filename, '.mat'], 'RepsStruct');
                     end
