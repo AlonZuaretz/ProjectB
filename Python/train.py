@@ -1,45 +1,63 @@
 import torch
 
 
-def train_and_validate(model, train_loader, test_loader, criterion, optimizer, device, epochs=10, save_path='best_model.pth'):
-    best_validation_loss = float('inf')  # Initialize the best validation loss to a large number
+def train_and_validate(model, train_loader, val_loader, criterion, optimizer, device, epochs, save_path, save_flag):
+    model.train()
+
+    # Lists to store loss metrics per epoch
+    train_losses = []
+    val_losses = []
+    best_val_loss = float('inf')
 
     for epoch in range(epochs):
-        model.train()
-        train_loss = 0.0
-        for data, target in train_loader:
-            data, target = data.to(device), target.to(device)
+        model.train()  # Set model to training mode
+        running_train_loss = 0.0
 
-            # Forward pass
-            output = model(data)
-            # Loss
-            loss = criterion(output, target)
-            # Backward pass
+        # Training loop
+        for inputs, labels in train_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
-            train_loss += loss.item() * data.size(0)
 
-        train_loss /= len(train_loader.dataset)
+            running_train_loss += loss.item() * inputs.size(0)
 
-        # Validation
-        model.eval()
-        validation_loss = 0.0
+        # Calculate average training loss for the epoch
+        epoch_train_loss = running_train_loss / len(train_loader.dataset)
+        train_losses.append(epoch_train_loss)
+
+        # Validation loop
+        model.eval()  # Set model to evaluation mode
+        running_val_loss = 0.0
+
         with torch.no_grad():
-            for data, target in test_loader:
-                data, target = data.to(device), target.to(device)
-                output = model(data)
-                loss = criterion(output, target)
-                validation_loss += loss.item() * data.size(0)
+            for inputs, labels in val_loader:
+                inputs, labels = inputs.to(device), labels.to(device)
+                outputs = model(inputs)
+                loss = criterion(outputs, labels)
+                running_val_loss += loss.item() * inputs.size(0)
 
-        validation_loss /= len(test_loader.dataset)
+        # Calculate average validation loss for the epoch
+        epoch_val_loss = running_val_loss / len(val_loader.dataset)
+        val_losses.append(epoch_val_loss)
 
-        print(f'Epoch {epoch + 1}/{epochs} - Training Loss: {train_loss:.4f}, Validation Loss: {validation_loss:.4f}')
+        print(f'Epoch {epoch + 1}, Train Loss: {epoch_train_loss}, Validation Loss: {epoch_val_loss}')
 
         # Check if the current validation loss is the best
-        if validation_loss < best_validation_loss:
-            best_validation_loss = validation_loss
-            print(f"Saving new best model with Validation Loss: {best_validation_loss:.4f}")
-            torch.save(model.state_dict(), save_path)  # Save the model's state_dict
+        if save_flag and running_val_loss < best_val_loss:
+            torch.save(model.state_dict(), save_path + r"\checkpoint.pth")  # Save the model's state_dict
+
+    if save_flag:
+        info = {
+            'train_loss': train_losses,
+            'val_loss': val_losses,
+        }
+        torch.save(info, save_path + r"\train_info.pth")
+
+    return train_losses, val_losses
+
+
 
 

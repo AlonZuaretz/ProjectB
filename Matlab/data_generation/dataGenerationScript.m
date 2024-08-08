@@ -3,8 +3,8 @@ set(0, 'DefaultFigureWindowStyle', 'docked');
 
 
 globDir = 'C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV1';
-paramsDir = '\lowSIR';
-dataDir = '\lowSIR\raw';
+paramsDir = '\allSIR';
+dataDir = '\allSIR\raw';
 saveParamsDir = [globDir, paramsDir];
 saveDataDir = [globDir, dataDir];
 
@@ -42,7 +42,7 @@ thetaDist = 10; % [deg]
 
 % changing parameters:
 SNRs = 10:5:50; % vector of SNR values
-SIRs = -40:5:-10; % vector of SIR values
+SIRs = -20:10:30; % vector of SIR values
 numInt = 1; % vector of number of interferences
 
 intMode = ["filtNoise", "CW"]; % TODO : mixture of correlated and non-correlated interferences.

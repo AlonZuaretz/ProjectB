@@ -1,5 +1,5 @@
 clear
-files = dir('generatedDataV1_simple\raw');
+files = dir('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV1\allSIR\raw');
 files = files(3:end);
 
 N = length(files);
@@ -24,4 +24,4 @@ for f = 1:N
         params((f-1)*numReps + i) = RepsStruct(i).params;
     end
 end
-save('generatedDataV1_simple\dataForPython.mat', 'Xw', 'XR', 'Yw', 'YR', 'params')
+save('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV1\allSIR\dataForPython.mat', 'Xw', 'XR', 'Yw', 'YR', 'params')
