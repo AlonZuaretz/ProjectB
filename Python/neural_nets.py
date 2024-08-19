@@ -1,6 +1,10 @@
 import torch.nn as nn
 
 
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=3):
         super(ConvBlock, self).__init__()
@@ -51,19 +55,23 @@ class ResidualBlock(nn.Module):
 class Stage1Network(nn.Module):
     def __init__(self):
         super(Stage1Network, self).__init__()
-        self.conv_block1 = ConvBlock(1, 4)  # Assuming input has 1 channel
-        self.conv_block2 = ConvBlock(4, 16)
-        self.res_block1 = ResidualBlock(16)
-        self.res_block2 = ResidualBlock(16)
-        self.res_block3 = ResidualBlock(16)
-        self.output_conv = nn.Conv2d(16, 1, kernel_size=3, padding=1)
+        self.net = nn.Sequential(
+            ConvBlock(1, 4),
+            ConvBlock(4, 16),
+            ResidualBlock(16),
+            ConvBlock(16, 32),
+            ConvBlock(32, 32),
+            ResidualBlock(32),
+            ConvBlock(32, 64),
+            ConvBlock(64, 64),
+            ResidualBlock(64),
+            ResidualBlock(64),
+            )
+        self.output_conv = nn.Conv2d(64, 1, kernel_size=3, padding=1)
+        self.paramaters_num = count_parameters(self)
 
     def forward(self, x):
-        x = self.conv_block1(x)
-        x = self.conv_block2(x)
-        x = self.res_block1(x)
-        x = self.res_block2(x)
-        x = self.res_block3(x)
+        x = self.net(x)
         x = self.output_conv(x)
         return x
 
@@ -71,18 +79,21 @@ class Stage1Network(nn.Module):
 class Stage2Network(nn.Module):
     def __init__(self):
         super(Stage2Network, self).__init__()
-        self.conv_block1 =  ConvBlock(1, 4)
-        self.conv_block2 = ConvBlock(4, 16)
-        self.pool = nn.AvgPool2d(2)
-        self.res_block1 = ResidualBlock(16)
-        self.res_block2 = ResidualBlock(16)
-        self.linear = nn.Linear(16*2*2, 8)
+        self.net = nn.Sequential(
+            ConvBlock(2, 4),
+            ConvBlock(4, 16),
+            ResidualBlock(16),
+            ConvBlock(16, 32),
+            ConvBlock(32, 32),
+            ResidualBlock(32),
+            ConvBlock(32, 64),
+            ConvBlock(64, 64),
+            ResidualBlock(64),
+        )
+        self.output_layer = nn.Linear(64*4*4, 8)
 
     def forward(self, x):
-        x = self.conv_block1(x)
-        x = self.conv_block2(x)
-        x = self.pool(x)
-        x = self.res_block1(x)
-        x = self.res_block2(x)
-        x = self.linear(x)
+        x = self.net(x)
+        x = x.view(x.size(0), -1)
+        x = self.output_layer(x)
         return x

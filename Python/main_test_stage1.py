@@ -1,23 +1,27 @@
 import torch
 import numpy as np
 
-from data_helper import extract_data, create_dataloaders_cov, real_imag_to_hermitian
+from data_helper import (extract_data, create_dataloaders_cov, real_imag_to_hermitian,
+                         abs_phase_rejoin, abs_phase_rejoin_hermitian)
 from neural_nets import Stage1Network
 from scipy.io import savemat
 
 
 if __name__ == "__main__":
 
-    path = r"C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV1_new\allSIR\dataForPython.mat"
-    save_path = r"C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV1_new\allSIR\netV1_results"
+    path = r"C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV2\dataForPython_train.mat"
+    save_path = r"C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV2\netV2_results"
     Xw, Yw, XR, YR, params = extract_data(path)
 
-    batch_size = 256
+    batch_size = 1024
+    pre_method = 1
 
-    _, test_loader_cov, _, idx_test = create_dataloaders_cov(XR, YR, batch_size=batch_size)
+    _, test_loader_cov, _, idx_test = create_dataloaders_cov(XR, YR, pre_method, batch_size=batch_size, test_size=0.2)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = Stage1Network().to(device)
-    model.load_state_dict(torch.load('checkpoint.pth'))
+    model.load_state_dict(torch.load('checkpoint_stage1_finetuned.pth'))
+
+
 
     inputs_list = []
     outputs_list = []
@@ -41,9 +45,18 @@ if __name__ == "__main__":
     labels_np_temp = np.array(labels_list)
     inputs_np_temp = np.array(inputs_list)
 
-    outputs_np = real_imag_to_hermitian(outputs_np_temp)
-    labels_np = real_imag_to_hermitian(labels_np_temp)
-    inputs_np = real_imag_to_hermitian(inputs_np_temp)
+    if pre_method == 1:
+        outputs_np = real_imag_to_hermitian(outputs_np_temp)
+        labels_np = real_imag_to_hermitian(labels_np_temp)
+        inputs_np = real_imag_to_hermitian(inputs_np_temp)
+    elif pre_method == 2:
+        outputs_np = abs_phase_rejoin(outputs_np_temp)
+        labels_np = abs_phase_rejoin(labels_np_temp)
+        inputs_np = abs_phase_rejoin(inputs_np_temp)
+    else:
+        outputs_np = abs_phase_rejoin_hermitian(outputs_np_temp)
+        labels_np = abs_phase_rejoin_hermitian(labels_np_temp)
+        inputs_np = abs_phase_rejoin_hermitian(inputs_np_temp)
 
     data = {
         'YR': outputs_np,

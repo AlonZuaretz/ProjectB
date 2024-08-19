@@ -1,8 +1,36 @@
+% Given a data file extracted from python with relevant parameters. This
+% script provides a full restoration of the signals that were used to
+% create the MVDR, MPDR, wMVDR, wMPDR.
+% 
 clear
-load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV1_new\allSIR\globalParams.mat")
-load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV1_new\allSIR\netV1_results\data.mat")
+set(0, 'DefaultFigureWindowStyle', 'docked');
+load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV2\globalParams_train.mat")
+load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV2\netV2_results\data.mat")
+
+%%
+SIRval = -20;
+SNRval = 20;
+Nval = 2^10;
+intMode = 'filtNoise';
+inputMode = 'CW';
+
+for i = 1:length(pythonParams)
+    term1(i) = pythonParams(i).SIR == SIRval;
+end
+for i = 1:length(pythonParams)
+    term2(i) = pythonParams(i).SNR == SNRval;
+end
+for i = 1:length(pythonParams)
+    term3(i) = pythonParams(i).N >= Nval;
+end
+term4 = strcmp([pythonParams.intMode], intMode);
+term5 = strcmp([pythonParams.inputMode], inputMode);
+terms = term1 .* term2 .* term3 .* term4 .* term5;
+relIdxs = find(terms);
+
+
+relIdx = relIdxs(1);
 fsBB = params.fsBB;
-relIdx = 15;
 relStruct = pythonParams(relIdx);
 relXR = double(squeeze(XR(relIdx,:,:)));
 relYR = double(squeeze(YR(relIdx,:,:)));
@@ -15,8 +43,8 @@ params.numInt = double(relStruct.numInt);
 params.inputAngle = double(relStruct.inputAngle);
 params.interferenceAngle = double(relStruct.interferenceAngle);
 
-inputAngle = params.inputAngle
-interferenceAngle = params.interferenceAngle
+inputAngle = params.inputAngle;
+interferenceAngle = params.interferenceAngle;
 
 mvdrBeamFormer = MyMVDRBeamFormer(params);
 inputSteeringVector = mvdrBeamFormer.SteeringVector;
@@ -77,10 +105,7 @@ rxSignal = x + interference + noise;
 [RMPDR, wMPDR] = mvdrBeamFormer.mvdrTrain(rxSignal);
 RMPDR = RMPDR ./ max(abs(RMPDR),[], 'all');
 
-
-
-mvdrBeamFormer.CovarianceMatrix = relYR;
-w = mvdrBeamFormer.calcWeights();
+w = mvdrBeamFormer.calcWeights(relYR);
 
 figure;
 pattern(params.ula_array,params.carrierFreq,-180:180,0,'Weights',wMVDR,'Type','directivity',...
@@ -93,13 +118,14 @@ pattern(params.ula_array,params.carrierFreq,-180:180,0,'Weights',wMPDR,'Type','d
     'PropagationSpeed',params.c,...
     'CoordinateSystem','rectangular');
 
+
 pattern(params.ula_array,params.carrierFreq,-180:180,0,'Weights',w,'Type','directivity',...
     'PropagationSpeed',params.c,...
     'CoordinateSystem','rectangular');
 
 xline([inputAngle(1), interferenceAngle(1)], 'LineWidth', 1.5)
-
-legend('wMVDR','wMPDR', 'Reconstructed')
+title(['SIR = ', num2str(SIRval), '[dB]'])
+legend('wMVDR','wMPDR', 'Reconstructed', 'Location','southeast')
 
 
 

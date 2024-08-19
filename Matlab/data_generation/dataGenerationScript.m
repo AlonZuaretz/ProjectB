@@ -2,9 +2,9 @@ clear
 set(0, 'DefaultFigureWindowStyle', 'docked');
 
 
-globDir = 'C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV1_new';
-paramsDir = '\lowerSIR';
-dataDir = '\lowerSIR\raw';
+globDir = 'C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV2';
+paramsDir = '\raw_train_fixed';
+dataDir = '\raw_train_fixed';
 saveParamsDir = [globDir, paramsDir];
 saveDataDir = [globDir, dataDir];
 
@@ -41,15 +41,15 @@ thetaMax = 60; % [deg]
 thetaDist = 10; % [deg]
 
 % changing parameters:
-SNRs = 10:5:50; % vector of SNR values
-SIRs = -50:5:-20; % vector of SIR values
+SNRs = 20:5:50;  % vector of SNR values
+SIRs = -50:5:-10;  % vector of SIR values
 numInt = 1; % vector of number of interferences
 
 intMode = ["filtNoise", "CW"]; % TODO : mixture of correlated and non-correlated interferences.
 inputMode = ["filtNoise", "CW"];
 
 % how many times to randomize:
-randAnglesNum = 10;
+randAnglesNum = 40;
 randReps = 20;
 
 N1 = length(SNRs);
@@ -76,17 +76,16 @@ addParams.randAnglesNum = randAnglesNum;
 addParams.randReps = randReps;
 addParams.Nreps = Nreps;
 
-% save([saveParamsDir, '\globalParams.mat'], 'params', 'addParams');
+
+save([saveParamsDir, '\globalParams.mat'], 'params', 'addParams');
 
 
 h = waitbar(0, 'Please wait... Progress loading');
 for i1 = 1:N1 % iterate through snr values
     snr = SNRs(i1);
-    params.SNR = snr;
 
     for i2 = 1:N2 % iterate throgh sir values
         sir = SIRs(i2);
-        params.SIR = sir;
 
         for i3 = 1:N3 % iterate through number of interferences
             nInt = numInt(i3);
@@ -130,7 +129,10 @@ for i1 = 1:N1 % iterate through snr values
                         for i7 = 1:N7
                             currIter = calcIter(i1, i2, i3, i4, i5, i6, i7, N2 ,N3 ,N4 ,N5 ,N6 ,N7);
                             seed = currIter;
-                            rng(seed)   
+                            rng(seed)  
+
+                            params.SNR = max(min(SNRs), snr + randi([-4, 4]));
+                            params.SIR = min(min(SIRs), sir + randi([-4, 4]));
                             
                             % loading bar:
                             waitbar(currIter / Nreps, h, sprintf('Progress: %d%%', floor(currIter / Nreps * 100)));
@@ -151,6 +153,7 @@ for i1 = 1:N1 % iterate through snr values
                             rxInt = interference + noise;
     
                             % calculate optimal MVDR matrix and coefficients:
+                            mvdrBeamFormer.SteeringVector = inputSteeringVector;
                             [RMVDR, wMVDR] = mvdrBeamFormer.mvdrTrain(rxInt);
     
                             %% distorted MPDR
@@ -169,6 +172,7 @@ for i1 = 1:N1 % iterate through snr values
                                 inputBW = [];
                             end
 
+
                             params.N = nSamples;
                             params.T = T;
                             params.t = t;
@@ -185,9 +189,17 @@ for i1 = 1:N1 % iterate through snr values
                             interference = myCollectPlaneWave(SoA_corr, params, interferenceAngle, intSteeringVector, GPflag);
                             rxSignal = x + interference + noise;
     
+                            
+
+                            % Make the mvdr estimate the DOA base on RMPDR:
+                            mvdrBeamFormer.SteeringVector = [];
+
                             % calculate distorted MPDR matrix and coefficients:
                             [RMPDR, wMPDR] = mvdrBeamFormer.mvdrTrain(rxSignal);
-    
+
+                            estDoa = mvdrBeamFormer.desiredDOA;
+                            trueDoa = inputAngle;
+
                             % Saving procedure:
                             saveParams = struct();
                             saveParams.N = nSamples;
@@ -206,14 +218,16 @@ for i1 = 1:N1 % iterate through snr values
                             RepsStruct(i7).wMVDR = wMVDR;
                             RepsStruct(i7).RMPDR = RMPDR;
                             RepsStruct(i7).wMPDR = wMPDR;
+                            RepsStruct(i7).estDOA = estDoa;
+                            RepsStruct(i7).trueDOA = trueDoa;
                             RepsStruct(i7).params = saveParams;
 
                         end
                             % save data:
-                            % C = {[saveDataDir, '\run'], num2str(i1), num2str(i2), num2str(i3), num2str(i4), num2str(i5), num2str(i6)};
-                            % filename = strjoin(C, '_');
-                            % save([filename, '.mat'], 'RepsStruct');
-                    end
+                            C = {[saveDataDir, '\run'], num2str(i1), num2str(i2), num2str(i3), num2str(i4), num2str(i5), num2str(i6)};
+                            filename = strjoin(C, '_');
+                            save([filename, '.mat'], 'RepsStruct');
+                    end          
                 end
             end
         end
@@ -222,16 +236,16 @@ end
 
 
 %%
-figure;
-pattern(params.ula_array,params.carrierFreq,-180:180,0,'Weights',wMVDR,'Type','directivity',...
-    'PropagationSpeed',params.c,...
-    'CoordinateSystem','rectangular');
-axis([-90 90 -80 20]);
-
-hold on;
-pattern(params.ula_array,params.carrierFreq,-180:180,0,'Weights',wMPDR,'Type','directivity',...
-    'PropagationSpeed',params.c,...
-    'CoordinateSystem','rectangular');
+% figure;
+% pattern(params.ula_array,params.carrierFreq,-180:180,0,'Weights',wMVDR,'Type','directivity',...
+%     'PropagationSpeed',params.c,...
+%     'CoordinateSystem','rectangular');
+% axis([-90 90 -80 20]);
+% 
+% hold on;
+% pattern(params.ula_array,params.carrierFreq,-180:180,0,'Weights',wMPDR,'Type','directivity',...
+%     'PropagationSpeed',params.c,...
+%     'CoordinateSystem','rectangular');
 
 
 function globalIter = calcIter(i1, i2, i3, i4, i5, i6, i7, N2,N3,N4,N5,N6,N7)

@@ -1,9 +1,10 @@
 clear
-files = dir('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV1_new\lowerSIR\raw');
+files = dir('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV2\raw_train');
 files = files(3:end);
 
 N = length(files);
-numReps = 10;
+load([files(1).folder,'\', files(1).name])
+numReps = length(RepsStruct);
 Xw = zeros(N*numReps,4,1);
 Yw = zeros(N*numReps,4,1);
 
@@ -21,7 +22,10 @@ for f = 1:N
         Yw((f-1)*numReps + i, :, :) = RepsStruct(i).wMVDR;
         XR((f-1)*numReps + i, :, :) = RepsStruct(i).RMPDR;
         YR((f-1)*numReps + i, :, :) = RepsStruct(i).RMVDR;
+        Xdoa((f-1)*numReps + i, :, :) = RepsStruct(i).DOA;
+        Ydoa((f-1)*numReps + i, :, :) = RepsStruct(i).params.inputAngle;
         params((f-1)*numReps + i) = RepsStruct(i).params;
     end
 end
-save('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV1_new\lowerSIR\dataForPython.mat', 'Xw', 'XR', 'Yw', 'YR', 'params')
+save('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV2\dataForPython_train.mat' ...
+    , 'Xw', 'XR', 'Yw', 'YR','Xdoa', 'Ydoa', 'params')

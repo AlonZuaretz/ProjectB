@@ -12,10 +12,7 @@ function [SoI, SoA, noise] = simSignals(params)
     % simulate signal of interest:
     SoI = cos(2*pi*carrierFreq*t);
 
-    % simulate noise and interferences with desired SNR and SINR
-    % SINR = Ps / Pint + Pnoise
-    % SNR = Ps / Pnoise
-
+    
     SNRlin = 10^(SNR/10);
     SIRlin = 10^(SIR/10);
     
