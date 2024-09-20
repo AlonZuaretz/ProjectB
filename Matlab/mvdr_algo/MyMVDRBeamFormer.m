@@ -1,6 +1,15 @@
 classdef MyMVDRBeamFormer < handle
     % MVDRBeamformer performs beamforming using the MVDR algorithm.
     % Only the method mvdrTrain updates the object properties
+
+    %% TODO:
+    % Improve estimation of DOA:
+    % Define the set of steering vectors as a class parameter and then
+    % don't calculate it every time.
+    % Then, use the following formula:
+    % pPattern = 1./real(sum(sv'.*(Cx\sv).',2));
+    % where sv is 4 x thetasNum, Cx is the covariance matrix.
+    %%
     properties
         Array % Array object
         CovarianceMatrix % Covariance matrix of the array inputs

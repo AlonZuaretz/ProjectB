@@ -9,8 +9,8 @@ from scipy.io import savemat
 
 if __name__ == "__main__":
 
-    path = r"C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV2\dataForPython_train.mat"
-    save_path = r"C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV2\netV3_results"
+    path = r"C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV3\dataForPython_train_noDoaEst.mat"
+    save_path = r"C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV3\netV3_results"
     Xw, Yw, XR, YR, params = extract_data(path)
 
     batch_size = 1024
@@ -19,11 +19,13 @@ if __name__ == "__main__":
     _, test_loader_cov, _, idx_test = create_dataloaders_cov(XR, YR, pre_method, batch_size=batch_size, test_size=0.2)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     stage1_model = Stage1Network().to(device)
-    stage1_model.load_state_dict(torch.load('checkpoint_stage1_finetuned.pth'))
+    checkpoint = torch.load('checkpoint_stage1_58_epochs_finetuned.pth', map_location=device)
+    stage1_model.load_state_dict(checkpoint['model_state_dict'])
 
     _, test_loader_weights, _, _ = create_dataloaders_weights(Xw, Yw, batch_size=batch_size)
     stage2_model = Stage2Network().to(device)
-    stage2_model.load_state_dict(torch.load('checkpoint_stage2_finetuned.pth'))
+    checkpoint = torch.load('checkpoint_stage2.pth', map_location=device)
+    stage2_model.load_state_dict(checkpoint['model_state_dict'])
 
     inputs_list = []
     outputs_list = []

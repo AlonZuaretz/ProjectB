@@ -49,6 +49,10 @@ rxSignal = x + rxInt;
 %% Estimate DOA:
 
 doa = mvdrBeamFormer.estimateDOA(1, covMatrixMPDR, -60:0.5:60, true);
+mvdrspatialspect = phased.MVDREstimator('SensorArray',ula_array,...
+        'OperatingFrequency',carrierFreq,'ScanAngles',-90:90,...
+        'DOAOutputPort',true,'NumSignals',2);
+[~,ang] = mvdrspatialspect(rxSignal)
 
 yMVDR = mvdrBeamFormer.mvdrBeamFormer(rxSignal);
 mvdrBF.TrainingInputPort = true;

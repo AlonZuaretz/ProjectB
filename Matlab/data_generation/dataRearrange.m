@@ -1,15 +1,20 @@
 clear
-files = dir('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV2\raw_train');
-files = files(3:end);
+files = dir('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV3\raw_train');
+files = files(4:end);
 
 N = length(files);
 load([files(1).folder,'\', files(1).name])
-numReps = length(RepsStruct);
-Xw = zeros(N*numReps,4,1);
-Yw = zeros(N*numReps,4,1);
+numAngleReps = length(angleRepsStruct);
+numReps = length(angleRepsStruct(1).RepsStruct);
 
-XR = zeros(N*numReps,4,4);
-YR = zeros(N*numReps,4,4);
+Xw = zeros(N*numReps*numAngleReps,4,1);
+Yw = zeros(N*numReps*numAngleReps,4,1);
+
+XR = zeros(N*numReps*numAngleReps,4,4);
+YR = zeros(N*numReps*numAngleReps,4,4);
+
+Xdoa = zeros(N*numReps*numAngleReps,2);
+Ydoa = zeros(N*numReps*numAngleReps,2);
 
 params = struct('N', [], 'SNR', [], 'SIR', [], 'numInt', [], 'intMode', [], 'inputMode', [], 'inputAngle', [] ...
     ,'interferenceAngle', [], 'intBW', [], 'inputBW', [], 'seed', []);
@@ -17,15 +22,19 @@ params = struct('N', [], 'SNR', [], 'SIR', [], 'numInt', [], 'intMode', [], 'inp
 
 for f = 1:N
     load([files(f).folder,'\', files(f).name])
-    for i = 1:numReps
-        Xw((f-1)*numReps + i, :, :) = RepsStruct(i).wMPDR;
-        Yw((f-1)*numReps + i, :, :) = RepsStruct(i).wMVDR;
-        XR((f-1)*numReps + i, :, :) = RepsStruct(i).RMPDR;
-        YR((f-1)*numReps + i, :, :) = RepsStruct(i).RMVDR;
-        Xdoa((f-1)*numReps + i, :, :) = RepsStruct(i).DOA;
-        Ydoa((f-1)*numReps + i, :, :) = RepsStruct(i).params.inputAngle;
-        params((f-1)*numReps + i) = RepsStruct(i).params;
+    for j = 1:numAngleReps
+        RepsStruct = angleRepsStruct(j).RepsStruct;
+		for i = 1:numReps
+            globIterNum = (f-1)*numReps*numAngleReps + (j-1)*numReps + i;
+			Xw(globIterNum, :, :) = RepsStruct(i).wMPDR;
+			Yw(globIterNum, :, :) = RepsStruct(i).wMVDR;
+			XR(globIterNum, :, :) = RepsStruct(i).RMPDR;
+			YR(globIterNum, :, :) = RepsStruct(i).RMVDR;
+			Xdoa(globIterNum, :, :) = RepsStruct(i).estDOA;
+			Ydoa(globIterNum, :, :) = RepsStruct(i).trueDOA;
+			params(globIterNum) = RepsStruct(i).params;
+		end
     end
 end
-save('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV2\dataForPython_train.mat' ...
-    , 'Xw', 'XR', 'Yw', 'YR','Xdoa', 'Ydoa', 'params')
+save('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV3\dataForPython_train.mat' ...
+    , 'Xw', 'XR', 'Yw', 'YR', 'Xdoa', 'Ydoa', 'params')

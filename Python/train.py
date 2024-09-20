@@ -56,7 +56,12 @@ def train_and_validate_cov(model, train_loader, val_loader, criterion, optimizer
 
             # Check if the current validation loss is the best
             if save_flag and running_val_loss < best_val_loss:
-                torch.save(model.state_dict(), save_path + r"\checkpoint.pth")  # Save the model's state_dict
+                torch.save({
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    'scheduler_state_dict': scheduler.state_dict(),
+                    'epoch': epoch + 1,
+                }, save_path + r"\checkpoint_stage1.pth")
 
     except KeyboardInterrupt:
         print("Training interrupted. Saving progress and exiting.")
@@ -148,7 +153,12 @@ def train_and_validate_weights(model1, model2, train_loader_weights, val_loader_
 
                 # Check if the current validation loss is the best
                 if save_flag and running_val_loss < best_val_loss:
-                    torch.save(model2.state_dict(), save_path + r"\checkpoint.pth")  # Save the model's state_dict
+                    torch.save({
+                        'model_state_dict': model2.state_dict(),
+                        'optimizer_state_dict': optimizer.state_dict(),
+                        'scheduler_state_dict': scheduler.state_dict(),
+                        'epoch': epoch + 1,
+                    }, save_path + r"\checkpoint_stage2_finetune.pth")
 
     except KeyboardInterrupt:
         print("Training interrupted. Saving progress and exiting.")

@@ -4,12 +4,12 @@
 % 
 clear
 set(0, 'DefaultFigureWindowStyle', 'docked');
-load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV2\globalParams_train.mat")
-load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV2\netV2_results\data.mat")
+load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV3\globalParams_train.mat")
+load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV3\netV3_results\covData_58_epochs_finetuned.mat")
 
 %%
-SIRval = -20;
-SNRval = 20;
+SIRval = -30;
+SNRval = 25;
 Nval = 2^10;
 intMode = 'filtNoise';
 inputMode = 'CW';

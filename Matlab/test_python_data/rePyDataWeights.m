@@ -1,11 +1,11 @@
 clear
 set(0, 'DefaultFigureWindowStyle', 'docked');
-load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV2\globalParams_train.mat")
-load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV2\netV3_results\data.mat")
+load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV3\raw_train_no_doa_estimation\globalParams_train.mat")
+load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV3\netV3_results\weightsData.mat")
 
 %%
-SIRval = -50;
-SNRval = 20;
+SIRval = -45;
+SNRval = 40;
 Nval = 2^10;
 intMode = 'filtNoise';
 inputMode = 'filtNoise';

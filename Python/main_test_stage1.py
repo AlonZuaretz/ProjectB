@@ -9,8 +9,8 @@ from scipy.io import savemat
 
 if __name__ == "__main__":
 
-    path = r"C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV2\dataForPython_train.mat"
-    save_path = r"C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV2\netV2_results"
+    path = r"C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV3\dataForPython_train.mat"
+    save_path = r"C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV3\netV3_results"
     Xw, Yw, XR, YR, params = extract_data(path)
 
     batch_size = 1024
@@ -19,9 +19,8 @@ if __name__ == "__main__":
     _, test_loader_cov, _, idx_test = create_dataloaders_cov(XR, YR, pre_method, batch_size=batch_size, test_size=0.2)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = Stage1Network().to(device)
-    model.load_state_dict(torch.load('checkpoint_stage1_finetuned.pth'))
-
-
+    checkpoint = torch.load('checkpoint_stage1_58_epochs_finetuned.pth', map_location=device)
+    model.load_state_dict(checkpoint['model_state_dict'])
 
     inputs_list = []
     outputs_list = []
@@ -44,6 +43,7 @@ if __name__ == "__main__":
     outputs_np_temp = np.array(outputs_list)
     labels_np_temp = np.array(labels_list)
     inputs_np_temp = np.array(inputs_list)
+
 
     if pre_method == 1:
         outputs_np = real_imag_to_hermitian(outputs_np_temp)
