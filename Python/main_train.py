@@ -1,8 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.optim.lr_scheduler import StepLR
 
+
+from torch.optim.lr_scheduler import StepLR
 from data_helper import extract_data, create_dataloaders_cov, create_dataloaders_weights, plot_losses
 from neural_nets import Stage1Network, Stage2Network
 from train import train_and_validate_cov, train_and_validate_weights
