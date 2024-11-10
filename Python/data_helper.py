@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from torch.utils.data import Dataset
 from sklearn.model_selection import train_test_split
@@ -22,7 +21,8 @@ def extract_data(path):
 def create_dataloaders_cov(XR, YR, pre_method, batch_size=32, test_size=0.2, random_state=42):
     # Split data into training and testing
     indices = np.arange(XR.shape[0])
-    XR_train, XR_test, YR_train, YR_test, idx_train, idx_test = train_test_split(XR, YR, indices, test_size=test_size, random_state=random_state)
+    XR_train, XR_test, YR_train, YR_test, idx_train, idx_test =\
+        train_test_split(XR, YR, indices, test_size=test_size, random_state=random_state)
 
     # Create datasets
     train_dataset = CovarianceDataset(XR_train, YR_train, pre_method)

@@ -1,8 +1,8 @@
 clear
 set(0, 'DefaultFigureWindowStyle', 'docked');
+addpath('Matlab\mvdr_algo\')
 
-
-globDir = 'C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV3';
+globDir = 'C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV4';
 paramsDir = '\raw_train';
 dataDir = '\raw_train';
 saveParamsDir = [globDir, paramsDir];
@@ -51,7 +51,7 @@ intMode = ["filtNoise", "CW"]; % TODO : mixture of correlated and non-correlated
 inputMode = ["filtNoise", "CW"];
 
 % how many times to randomize:
-randAnglesNum = 40;
+randAnglesNum = 50;
 randReps = 20;
 
 N1 = length(SNRs);
@@ -80,11 +80,8 @@ addParams.Nreps = Nreps;
 
 save([saveParamsDir, '\globalParams.mat'], 'params', 'addParams');
 %% Generation Flow:
-mvdrspatialspect = phased.MVDREstimator('SensorArray',ula_array,...
-        'OperatingFrequency',carrierFreq,'ScanAngles',-60:60,...
-        'DOAOutputPort',true,'NumSignals',2);
 
-h = waitbar(0, 'Please wait... Progress loading');
+% h = waitbar(0, 'Please wait... Progress loading');
 for i1 = 1:N1 % iterate through snr values
     snr = SNRs(i1);
 
@@ -94,14 +91,18 @@ for i1 = 1:N1 % iterate through snr values
         for i3 = 1:N3 % iterate through number of interferences
             nInt = numInt(i3);
             params.numInt = nInt;
+            mvdrspatialspect = phased.MVDREstimator('SensorArray',ula_array,...
+                'OperatingFrequency',carrierFreq,'ScanAngles',-60:60,...
+                'DOAOutputPort',true,'NumSignals',nInt + 1);
 
             for i4 = 1:N4 % iterate through modes of interferences
                 intM = intMode(i4);
                 % params.intMode is updated at i7 for loop
 
-                for i5 = 1:N5
+                for i5 = 1:N5 % iterate through modes of input
                     inputM = inputMode(i5);
                     % params.inputMode is updated at i7 for loop
+
                     angleRepsStruct = struct();
                     for i6 = 1:N6 % iterate through a set of random angles
                         
@@ -129,19 +130,23 @@ for i1 = 1:N1 % iterate through snr values
                         
                         % For each set of the previous parameters, create a
                         % struct which will hold randReps results
-                        RepsStruct = struct();
+                        NNparams = struct();
                         for i7 = 1:N7
                             currIter = calcIter(i1, i2, i3, i4, i5, i6, i7, N2 ,N3 ,N4 ,N5 ,N6 ,N7);
+                            if ~mod(currIter, 1e4)
+                                disp(currIter)
+                            end
+                            % loading bar:
+                            % waitbar(currIter / Nreps, h, sprintf('Progress: %d%%', floor(currIter / Nreps * 100)));
+
                             seed = currIter;
-                            rng(seed)  
+                            rng(seed) 
+
                             repSNR = max(min(SNRs), snr + randi([-4, 4]));
                             repSIR = min(max(SIRs), sir + randi([-4, 4]));
-
                             params.SNR = repSNR;
                             params.SIR = repSIR;
                             
-                            % loading bar:
-                            waitbar(currIter / Nreps, h, sprintf('Progress: %d%%', floor(currIter / Nreps * 100)));
                             %% optimal MVDR
                             
                             params.N = params.Nopt;
@@ -162,7 +167,7 @@ for i1 = 1:N1 % iterate through snr values
                             mvdrBeamFormer.SteeringVector = inputSteeringVector;
                             [RMVDR, wMVDR] = mvdrBeamFormer.mvdrTrain(rxInt);
     
-                            %% distorted MPDR
+                            %% MPDR
                             nSamples = randi([4, 2^16]);
                             T = nSamples/fsBB; 
                             t = (0:nSamples-1).' / fsBB;
@@ -178,7 +183,6 @@ for i1 = 1:N1 % iterate through snr values
                                 inputBW = [];
                             end
 
-
                             params.N = nSamples;
                             params.T = T;
                             params.t = t;
@@ -189,24 +193,21 @@ for i1 = 1:N1 % iterate through snr values
     
                             [SoA_corr, noise, SoI] = randSimSignals(params);
     
-                            % add G/P distortions in the reception
+                            % MPDR without G/P distortions
                             GPflag = false;
                             x = myCollectPlaneWave(SoI, params, inputAngle, inputSteeringVector, GPflag);
                             interference = myCollectPlaneWave(SoA_corr, params, interferenceAngle, intSteeringVector, GPflag);
                             rxSignal = x + interference + noise;
-    
-                            % Make the mvdr estimate the DOA based on RMPDR:
-                            % mvdrBeamFormer.SteeringVector = [];
-                            [~,ang] = mvdrspatialspect(rxSignal);
-                            ang = [ang(2); 0];
-                            mvdrBeamFormer.desiredDOA = ang;
-                            mvdrBeamFormer.SteeringVector = mvdrBeamFormer.calcSteeringVec();
+                            % calculate MPDR matrix:
+                            [RMPDR, ~] = mvdrBeamFormer.mvdrTrain(rxSignal);
 
-                            % calculate distorted MPDR matrix and coefficients:
-                            [RMPDR, wMPDR] = mvdrBeamFormer.mvdrTrain(rxSignal);
-
-                            estDoa = mvdrBeamFormer.desiredDOA;
-                            trueDoa = inputAngle;
+                            % MPDR with G/P distortions 
+                            GPflag = true;
+                            x = myCollectPlaneWave(SoI, params, inputAngle, inputSteeringVector, GPflag);
+                            interference = myCollectPlaneWave(SoA_corr, params, interferenceAngle, intSteeringVector, GPflag);
+                            rxSignal = x + interference + noise;
+                            % calculate distorted MPDR matrix:
+                            [RMPDR_distorted, ~] = mvdrBeamFormer.mvdrTrain(rxSignal);
 
                             % Saving procedure:
                             saveParams = struct();
@@ -222,21 +223,16 @@ for i1 = 1:N1 % iterate through snr values
                             saveParams.inputBW = inputBW;
                             saveParams.seed = seed;
 
-                            RepsStruct(i7).RMVDR = RMVDR;
-                            RepsStruct(i7).wMVDR = wMVDR;
-                            RepsStruct(i7).RMPDR = RMPDR;
-                            RepsStruct(i7).wMPDR = wMPDR;
-                            RepsStruct(i7).estDOA = estDoa;
-                            RepsStruct(i7).trueDOA = trueDoa;
-                            RepsStruct(i7).params = saveParams;
+                            NNparams(i7).RMVDR = RMVDR;
+                            NNparams(i7).wMVDR = wMVDR;
+                            NNparams(i7).RMPDR_distorted = RMPDR_distorted;
+                            NNparams(i7).RMPDR = RMPDR;
+                            NNparams(i7).inputAngle = inputAngle;
+                            NNparams(i7).trueSteeringVector = inputSteeringVector;
+                            NNparams(i7).params = saveParams;
 
                         end
-                            
-                            % save data:
-                            % C = {[saveDataDir, '\run'], num2str(i1), num2str(i2), num2str(i3), num2str(i4), num2str(i5), num2str(i6)};
-                            % filename = strjoin(C, '_');
-                            % save([filename, '.mat'], 'RepsStruct');
-                            angleRepsStruct(i6).RepsStruct = RepsStruct;
+                            angleRepsStruct(i6).RepsStruct = NNparams;
                     end 
                         C = {[saveDataDir, '\run'], num2str(i1), num2str(i2), num2str(i3), num2str(i4), num2str(i5)};
                         filename = strjoin(C, '_');

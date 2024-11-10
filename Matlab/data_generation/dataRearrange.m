@@ -1,5 +1,5 @@
 clear
-files = dir('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV3\raw_train');
+files = dir('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV4\raw_train');
 files = files(4:end);
 
 N = length(files);
@@ -13,8 +13,8 @@ Yw = zeros(N*numReps*numAngleReps,4,1);
 XR = zeros(N*numReps*numAngleReps,4,4);
 YR = zeros(N*numReps*numAngleReps,4,4);
 
-Xdoa = zeros(N*numReps*numAngleReps,2);
-Ydoa = zeros(N*numReps*numAngleReps,2);
+Xdoa = zeros(N*numReps*numAngleReps,4);
+Ydoa = zeros(N*numReps*numAngleReps,4);
 
 params = struct('N', [], 'SNR', [], 'SIR', [], 'numInt', [], 'intMode', [], 'inputMode', [], 'inputAngle', [] ...
     ,'interferenceAngle', [], 'intBW', [], 'inputBW', [], 'seed', []);
@@ -26,15 +26,15 @@ for f = 1:N
         RepsStruct = angleRepsStruct(j).RepsStruct;
 		for i = 1:numReps
             globIterNum = (f-1)*numReps*numAngleReps + (j-1)*numReps + i;
-			Xw(globIterNum, :, :) = RepsStruct(i).wMPDR;
+			% Xw(globIterNum, :, :) = RepsStruct(i).wMPDR;
 			Yw(globIterNum, :, :) = RepsStruct(i).wMVDR;
 			XR(globIterNum, :, :) = RepsStruct(i).RMPDR;
 			YR(globIterNum, :, :) = RepsStruct(i).RMVDR;
-			Xdoa(globIterNum, :, :) = RepsStruct(i).estDOA;
-			Ydoa(globIterNum, :, :) = RepsStruct(i).trueDOA;
+			% Xdoa(globIterNum, :, :) = RepsStruct(i).estDOA;
+			Ydoa(globIterNum, :, :) = RepsStruct(i).trueSteeringVector;
 			params(globIterNum) = RepsStruct(i).params;
 		end
     end
 end
-save('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV3\dataForPython_train.mat' ...
+save('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV4\dataForPython_train.mat' ...
     , 'Xw', 'XR', 'Yw', 'YR', 'Xdoa', 'Ydoa', 'params')

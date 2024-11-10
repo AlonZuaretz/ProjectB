@@ -8,20 +8,24 @@ function paramsOut = genParams(varargin)
 
     % Fix parameter values:
     M = 4; % Number of array elements
-    carrierFreq = 1e4; % [ Hz ]
+    carrierFreq = 28e9; % [ Hz ]
+    effCarrierFreq = 0;
     c = physconst('LightSpeed'); %  light speed in [ m/s ]
     lambda = c/carrierFreq; %  wave length in [ m ]
     d = lambda/2; % distance between array elements in [ m ]
-    fs = 1e6; % sampling frequency
-    T = 2; % total signal duration
+    fs = 125e6; % sampling frequency
+    T = 1e-6; % total signal duration
     t = (0:1/fs:T-1/fs).';
     N = size(t,1);
     intMode = 'noise'; % interference mode (noise or correlated)
     ula_array = phased.ULA('NumElements',M,'ElementSpacing',d);
+    load('Matlab\data_generation\element_gain_mismatch.mat', 'element_gain_mismatch');
+    load('Matlab\data_generation\element_ang_mismatch.mat', 'element_ang_mismatch');
+
     
     numInt = 1;
     SNR = 20; %dB
-    SIR = -10; %dB
+    SIR = -50; %dB
     if nargin == 1
         SNR = varargin{1};
     end
@@ -38,7 +42,7 @@ function paramsOut = genParams(varargin)
     inputAngle = [10;0];
     switch numInt
         case 1
-            interferenceAngle = [20;0];
+            interferenceAngle = [-10;0];
         case 2
             interferenceAngle = [[-30 ; 0] , [20;0]];
         case 3
@@ -49,11 +53,14 @@ function paramsOut = genParams(varargin)
 
     paramsOut.M = M;
     paramsOut.carrierFreq = carrierFreq;
+    paramsOut.effCarrierFreq = effCarrierFreq;
     paramsOut.c = c;
     paramsOut.lambda = lambda;
     paramsOut.d = d;
     paramsOut.fs = fs;
     paramsOut.ula_array = ula_array;
+    paramsOut.gainMatrix = element_gain_mismatch;
+    paramsOut.phaseMatrix = element_ang_mismatch;
     paramsOut.T = T;
     paramsOut.t = t;
     paramsOut.N = N;

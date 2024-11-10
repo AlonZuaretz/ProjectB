@@ -1,7 +1,7 @@
 function [SoI, SoA, noise] = simSignals(params)
     rng(17);
     M = params.M;
-    carrierFreq = params.carrierFreq;
+    effCarrierFreq = params.effCarrierFreq;
     t = params.t;
     N = params.N;
     SNR = params.SNR;
@@ -10,7 +10,7 @@ function [SoI, SoA, noise] = simSignals(params)
     intMode = params.intMode;
     
     % simulate signal of interest:
-    SoI = cos(2*pi*carrierFreq*t);
+    SoI = cos(2*pi*effCarrierFreq*t);
 
     
     SNRlin = 10^(SNR/10);
@@ -26,10 +26,10 @@ function [SoI, SoA, noise] = simSignals(params)
         sigma = sqrt(intPower / numInt);
         SoA = (sigma/sqrt(2)) * (randn(size(SoA)) + 1i*randn(size(SoA)));
     elseif strcmp(intMode, 'correlated')
-        randPhase = -pi + 2*pi*rand(1,numInt);
+        randPhase = 0; %-pi + 2*pi*rand(1,numInt);
         A = sqrt((2 * intPower) / numInt^2);
-        SoA =  A * cos(2*pi*(carrierFreq)*t + randPhase);
-    end  
+        SoA =  A * cos(2*pi*(effCarrierFreq)*t + randPhase);
+    end
     
     % simulate noise:
     noise = sqrt(noisePower/2)*(randn(size(SoI,1), M)+1i*randn(size(SoI,1), M));

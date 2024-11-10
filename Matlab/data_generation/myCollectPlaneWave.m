@@ -1,9 +1,9 @@
 function y = myCollectPlaneWave(x, params, angle, steeringVec, GPflag)
     if GPflag
-        gainMatrix = params.gainMatrix;
-        phaseMatrix = params.phaseMatrix;
         thetaIdx = round(angle(1,:) + 61);
-        steeringVec = steeringVec .* gainMatrix(thetaIdx, :).' .* exp(1i * deg2rad(phaseMatrix(thetaIdx,:))).';
+        gainVec = params.gainMatrix(thetaIdx, :).';
+        phaseVec = params.phaseMatrix(thetaIdx, :).';
+        steeringVec = steeringVec .* gainVec .* exp(1i * deg2rad(phaseVec));
     end
 
     y = x * steeringVec.' ; 
