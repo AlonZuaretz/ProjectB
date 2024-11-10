@@ -1,7 +1,7 @@
 import torch
 
 
-def train_and_validate(model, train_loader, val_loader, criterion, optimizer, device, epochs, save_path, save_flag):
+def train_and_validate(model, train_loader, val_loader, criterion, optimizer, device, epochs):
     model.train()
 
     # Lists to store loss metrics per epoch
@@ -45,16 +45,6 @@ def train_and_validate(model, train_loader, val_loader, criterion, optimizer, de
 
         print(f'Epoch {epoch + 1}, Train Loss: {epoch_train_loss}, Validation Loss: {epoch_val_loss}')
 
-        # Check if the current validation loss is the best
-        if save_flag and running_val_loss < best_val_loss:
-            torch.save(model.state_dict(), save_path + r"\checkpoint.pth")  # Save the model's state_dict
-
-    if save_flag:
-        info = {
-            'train_loss': train_losses,
-            'val_loss': val_losses,
-        }
-        torch.save(info, save_path + r"\train_info.pth")
 
     return train_losses, val_losses
 
