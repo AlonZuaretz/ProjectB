@@ -17,27 +17,28 @@ if __name__ == "__main__":
     # Global parameters:
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+    ###### Stage 1 parameters ######:
+    batch_size = 1024
+    epochs_num = 200
+    learning_rate = 5e-3
+    pre_method = 1
+
+    train_loader_cov, test_loader_cov, idx_train, idx_test = (
+        create_dataloaders_cov(XR, YR, pre_method, batch_size=batch_size))
+
+    stage1_model = Stage1Network().to(device)
+    optimizer = optim.Adam(stage1_model.parameters(), lr=learning_rate)
+    criterion = nn.MSELoss()
+    scheduler = StepLR(optimizer, step_size=10, gamma=0.5)
+
+    # Load from checkpoint:
+    checkpoint = torch.load('.pth', map_location=device)
+    stage1_model.load_state_dict(checkpoint['model_state_dict'])
+    # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    # scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+
     ###### Stage 1 training: #######
     if 1 in training_stage:
-        batch_size = 1024
-        epochs_num = 200
-        learning_rate = 5e-3
-        pre_method = 1
-
-        train_loader_cov, test_loader_cov, idx_train, idx_test = (
-            create_dataloaders_cov(XR, YR, pre_method, batch_size=batch_size))
-
-        stage1_model = Stage1Network().to(device)
-        optimizer = optim.Adam(stage1_model.parameters(), lr=learning_rate)
-        criterion = nn.MSELoss()
-        scheduler = StepLR(optimizer, step_size=10, gamma=0.5)
-
-        # Load from checkpoint:
-        # checkpoint = torch.load('.pth', map_location=device)
-        # stage1_model.load_state_dict(checkpoint['model_state_dict'])
-        # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        # scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
-
         train_losses, val_losses = train_and_validate_cov(stage1_model, train_loader_cov, test_loader_cov,
                                                           criterion, optimizer, scheduler, device,
                                                           epochs_num, save_path, save_flag)
@@ -52,15 +53,20 @@ if __name__ == "__main__":
         train_loader_weights, test_loader_weights, _, _ = create_dataloaders_weights(Xw, Yw, batch_size=batch_size)
         stage2_model = Stage2Network().to(device)
 
+        # Load stage 1 model:
+        stage1_model = Stage1Network().to(device)
+        checkpoint = torch.load('.pth', map_location=device)
+        stage1_model.load_state_dict(checkpoint['model_state_dict'])
+
         # Load from checkpoint:
-        checkpoint = torch.load('checkpoint_stage2.pth', map_location=device)
-        stage2_model.load_state_dict(checkpoint['model_state_dict'])
+        # checkpoint = torch.load('checkpoint_stage2.pth', map_location=device)
+        # stage2_model.load_state_dict(checkpoint['model_state_dict'])
         # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         # scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
 
         criterion = nn.MSELoss()
         optimizer = optim.Adam(stage2_model.parameters(), lr=learning_rate)
-        scheduler = ExponentialLR(optimizer, gamma=0.95)
+        scheduler = StepLR(optimizer, step_size=10, gamma=0.5)
         train_losses, val_losses = train_and_validate_weights(stage1_model, stage2_model, train_loader_weights, test_loader_weights,
                                                               train_loader_cov, test_loader_cov,
                                                               criterion, optimizer, scheduler, device,
