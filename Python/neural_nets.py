@@ -45,7 +45,7 @@ class Stage2Network(nn.Module):
             ConvBlock(64, 64),
             ResidualBlock(64),
         )
-        self.output_layer = nn.Linear(64*4*4, 8)
+        self.output_layer = nn.Linear(64*4*4, 16)
 
     def forward(self, x):
         x = self.net(x)

@@ -80,6 +80,7 @@ def train_and_validate_cov(model, train_loader, val_loader, criterion, optimizer
 
 def train_and_validate_weights(model1, model2, train_loader_weights, val_loader_weights,
                                train_loader_cov, val_loader_cov,
+                               train_loader_doa, val_loader_doa,
                                criterion, optimizer,
                                scheduler, device, epochs, save_path, save_flag):
     model1.eval()
@@ -95,27 +96,30 @@ def train_and_validate_weights(model1, model2, train_loader_weights, val_loader_
             running_train_loss = 0.0
 
             # Training loop
-            for (inputs_weights, labels_weights), (inputs_cov, labels_cov) in zip(train_loader_weights, train_loader_cov):
+            for (_, labels_weights), (inputs_cov, labels_cov), (labels_doa)\
+                    in zip(train_loader_weights, train_loader_cov, train_loader_doa):
                 # Check if ESC key was pressed
                 if keyboard.is_pressed('esc'):
                     raise KeyboardInterrupt
 
-                inputs_weights, labels_weights = inputs_weights.to(device), labels_weights.to(device)
+                labels_weights = labels_weights.to(device)
                 inputs_cov, labels_cov = inputs_cov.to(device), labels_cov.to(device)
+                labels_doa = labels_doa.to(device)
+                labels_stacked = torch.cat((labels_weights, labels_doa), dim=1)
 
                 outputs_stage1 = model1(inputs_cov)
                 inputs_stacked = torch.cat((inputs_cov, outputs_stage1), dim=1)
                 outputs = model2(inputs_stacked)
                 optimizer.zero_grad()
-                loss = criterion(outputs, labels_weights)
+                loss = criterion(outputs, labels_stacked)
                 loss.backward()
                 optimizer.step()
 
-                running_train_loss += loss.item() * inputs_weights.size(0)
+                running_train_loss += loss.item() * labels_weights.size(0)
 
             scheduler.step()
-            # Check gradients every epoch
-            # for name, parameter in model2.named_parameters():
+            #             # Check gradients every epoch
+            #             # for name, parameter in model2.named_parameters():
             #     if parameter.grad is not None:
             #         grad_norm = parameter.grad.norm()
             #         if grad_norm < 1e-6:
@@ -133,17 +137,20 @@ def train_and_validate_weights(model1, model2, train_loader_weights, val_loader_
                 running_val_loss = 0.0
 
                 with torch.no_grad():
-                    for (inputs_weights, labels_weights), (inputs_cov, labels_cov) in zip(val_loader_weights, val_loader_cov):
+                    for (_, labels_weights), (inputs_cov, labels_cov), (labels_doa) \
+                            in zip(val_loader_weights, val_loader_cov, val_loader_doa):
 
-                        inputs_weights, labels_weights = inputs_weights.to(device), labels_weights.to(device)
+                        labels_weights = labels_weights.to(device)
                         inputs_cov, labels_cov = inputs_cov.to(device), labels_cov.to(device)
+                        labels_doa = labels_doa.to(device)
+                        labels_stacked = torch.cat((labels_weights, labels_doa), dim=1)
 
                         outputs_stage1 = model1(inputs_cov)
                         inputs_stacked = torch.cat((inputs_cov, outputs_stage1), dim=1)
                         outputs = model2(inputs_stacked)
-                        loss = criterion(outputs, labels_weights)
+                        loss = criterion(outputs, labels_stacked)
 
-                        running_val_loss += loss.item() * inputs_weights.size(0)
+                        running_val_loss += loss.item() * labels_weights.size(0)
 
                 # Calculate average validation loss for the epoch
                 epoch_val_loss = running_val_loss / len(val_loader_weights.dataset)
@@ -158,7 +165,7 @@ def train_and_validate_weights(model1, model2, train_loader_weights, val_loader_
                         'optimizer_state_dict': optimizer.state_dict(),
                         'scheduler_state_dict': scheduler.state_dict(),
                         'epoch': epoch + 1,
-                    }, save_path + r"\checkpoint_stage2_finetune.pth")
+                    }, save_path + r"\checkpoint_stage2.pth")
 
     except KeyboardInterrupt:
         print("Training interrupted. Saving progress and exiting.")
@@ -169,7 +176,7 @@ def train_and_validate_weights(model1, model2, train_loader_weights, val_loader_
                 'train_loss': train_losses,
                 'val_loss': val_losses,
             }
-            torch.save(info, save_path + r"\train_info.pth")
+            torch.save(info, save_path + r"\train_info_stage2.pth")
             print("Information saved.")
 
     return train_losses, val_losses

@@ -13,9 +13,10 @@ def extract_data(path):
     Yw = data['Yw']
     XR = data['XR']
     YR = data['YR']
+    Ydoa = data['Ydoa']
     params = data['params']
 
-    return Xw, Yw, XR, YR, params
+    return Xw, Yw, XR, YR, Ydoa, params
 
 
 def create_dataloaders_cov(XR, YR, pre_method, batch_size=32, test_size=0.2, random_state=42):
@@ -49,6 +50,21 @@ def create_dataloaders_weights(Xw, Yw, batch_size=32, test_size=0.2, random_stat
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
     return train_loader, test_loader, idx_train, idx_test
+
+
+def create_dataloaders_doa(Yw, batch_size=32, test_size=0.2, random_state=42):
+    # Split data into training and testing
+    Yw_train, Yw_test = train_test_split(Yw, test_size=test_size, random_state=random_state)
+
+    # Create datasets
+    train_dataset = DoaDataset(Yw_train)
+    test_dataset = DoaDataset(Yw_test)
+
+    # Create dataloaders
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+    return train_loader, test_loader
 
 def plot_losses(train_losses, val_losses):
     # Set up the figure and axes
@@ -190,3 +206,25 @@ class WeightsDataset(Dataset):
         self.Xw = Xw_processed
         self.Yw = Yw_processed
 
+
+class DoaDataset(Dataset):
+    def __init__(self, Yw):
+        # Process and convert data before storing in the dataset
+        self.Yw = Yw
+        self.normalize_and_process()
+
+    def __len__(self):
+        return self.Yw.shape[0]
+
+    def __getitem__(self, idx):
+        return torch.tensor(self.Yw[idx], dtype=torch.float)
+
+    def normalize_and_process(self):
+        """Normalize complex Hermitian matrices and convert to real-valued format."""
+        Yw = self.Yw
+        Yw_real = np.real(Yw)
+        Yw_imag = np.imag(Yw)
+
+        Yw_processed = np.concatenate((Yw_real, Yw_imag), axis=1)
+
+        self.Yw = Yw_processed

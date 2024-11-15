@@ -36,5 +36,5 @@ for f = 1:N
 		end
     end
 end
-save('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV4\dataForPython_train.mat' ...
-    , 'Xw', 'XR', 'Yw', 'YR', 'Xdoa', 'Ydoa', 'params')
+% save('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV4\dataForPython_train.mat' ...
+%     , 'Xw', 'XR', 'Yw', 'YR', 'Xdoa', 'Ydoa', 'params')

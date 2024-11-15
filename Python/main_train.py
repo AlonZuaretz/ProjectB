@@ -3,7 +3,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR
 
-from data_helper import extract_data, create_dataloaders_cov, create_dataloaders_weights, plot_losses
+from data_helper import (extract_data, create_dataloaders_cov, create_dataloaders_weights,
+                         create_dataloaders_doa, plot_losses)
 from neural_nets import Stage1Network, Stage2Network
 from train import train_and_validate_cov, train_and_validate_weights
 
@@ -11,8 +12,8 @@ if __name__ == "__main__":
     path = r"C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV4\dataForPython_train.mat"
     save_path = r"C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV4\NN_results"
     save_flag = True
-    Xw, Yw, XR, YR, params = extract_data(path)
-    training_stage = [1]
+    Xw, Yw, XR, YR, Ydoa, params = extract_data(path)
+    training_stage = [2]
 
     # Global parameters:
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -32,7 +33,7 @@ if __name__ == "__main__":
     scheduler = StepLR(optimizer, step_size=10, gamma=0.5)
 
     # Load from checkpoint:
-    checkpoint = torch.load('.pth', map_location=device)
+    checkpoint = torch.load('checkpoint_stage1.pth', map_location=device)
     stage1_model.load_state_dict(checkpoint['model_state_dict'])
     # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     # scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
@@ -50,13 +51,9 @@ if __name__ == "__main__":
         epochs_num = 50
         learning_rate = 5e-4
 
+        train_loader_doa, test_loader_doa = create_dataloaders_doa(Yw, batch_size=batch_size)
         train_loader_weights, test_loader_weights, _, _ = create_dataloaders_weights(Xw, Yw, batch_size=batch_size)
         stage2_model = Stage2Network().to(device)
-
-        # Load stage 1 model:
-        stage1_model = Stage1Network().to(device)
-        checkpoint = torch.load('.pth', map_location=device)
-        stage1_model.load_state_dict(checkpoint['model_state_dict'])
 
         # Load from checkpoint:
         # checkpoint = torch.load('checkpoint_stage2.pth', map_location=device)
@@ -67,9 +64,12 @@ if __name__ == "__main__":
         criterion = nn.MSELoss()
         optimizer = optim.Adam(stage2_model.parameters(), lr=learning_rate)
         scheduler = StepLR(optimizer, step_size=10, gamma=0.5)
-        train_losses, val_losses = train_and_validate_weights(stage1_model, stage2_model, train_loader_weights, test_loader_weights,
-                                                              train_loader_cov, test_loader_cov,
-                                                              criterion, optimizer, scheduler, device,
-                                                              epochs_num, save_path, save_flag)
+        train_losses, val_losses \
+            = train_and_validate_weights(stage1_model, stage2_model,
+                                         train_loader_weights, test_loader_weights,
+                                         train_loader_cov, test_loader_cov,
+                                         train_loader_doa, test_loader_doa,
+                                         criterion, optimizer, scheduler, device,
+                                         epochs_num, save_path, save_flag)
 
         plot_losses(train_losses, val_losses)
