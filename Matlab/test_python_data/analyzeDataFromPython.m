@@ -1,6 +1,6 @@
 clear
-load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV2\globalParams_train.mat")
-load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV2\netV2_results\data.mat")
+load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV4\globalParams.mat")
+load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV4\NN_results\data.mat")
 %%
 SIRvals = addParams.SIRs;
 SIRvals_str = cellstr('SIR_' + strrep(string(SIRvals), '-', 'n'));

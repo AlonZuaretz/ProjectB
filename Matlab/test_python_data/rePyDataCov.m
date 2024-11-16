@@ -4,14 +4,17 @@
 % 
 clear
 set(0, 'DefaultFigureWindowStyle', 'docked');
-load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV3\globalParams_train.mat")
-load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV3\netV3_results\covData_58_epochs_finetuned.mat")
+% load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV4\globalParams.mat")
+% load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV4\NN_results\train2\data.mat")
+
+load("C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV4\globalParams.mat")
+load("C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV4\NN_results\stage1_train2\data.mat")
 
 %%
-SIRval = -30;
+SIRval = -15;
 SNRval = 25;
 Nval = 2^10;
-intMode = 'filtNoise';
+intMode = 'CW';
 inputMode = 'CW';
 
 for i = 1:length(pythonParams)
@@ -32,9 +35,9 @@ relIdxs = find(terms);
 relIdx = relIdxs(1);
 fsBB = params.fsBB;
 relStruct = pythonParams(relIdx);
-relXR = double(squeeze(XR(relIdx,:,:)));
-relYR = double(squeeze(YR(relIdx,:,:)));
-relYR_true = double(squeeze(YR_true(relIdx,:,:)));
+relXR = double(squeeze(input_XRd(relIdx,:,:)));
+relYR = double(squeeze(output_YR(relIdx,:,:)));
+relYR_true = double(squeeze(label_YR(relIdx,:,:)));
 
 
 params.SNR = double(relStruct.SNR);

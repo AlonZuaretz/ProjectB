@@ -1,5 +1,6 @@
 clear
-files = dir('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV4\raw_train');
+files = dir('C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV4\raw_train');
+% files = dir('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV4\raw_train');
 files = files(4:end);
 
 N = length(files);
@@ -10,6 +11,7 @@ numReps = length(angleRepsStruct(1).RepsStruct);
 Xw = zeros(N*numReps*numAngleReps,4,1);
 Yw = zeros(N*numReps*numAngleReps,4,1);
 
+XRd = zeros(N*numReps*numAngleReps,4,4);
 XR = zeros(N*numReps*numAngleReps,4,4);
 YR = zeros(N*numReps*numAngleReps,4,4);
 
@@ -28,7 +30,8 @@ for f = 1:N
             globIterNum = (f-1)*numReps*numAngleReps + (j-1)*numReps + i;
 			% Xw(globIterNum, :, :) = RepsStruct(i).wMPDR;
 			Yw(globIterNum, :, :) = RepsStruct(i).wMVDR;
-			XR(globIterNum, :, :) = RepsStruct(i).RMPDR;
+			XRd(globIterNum, :, :) = RepsStruct(i).RMPDR_distorted;
+            XR(globIterNum, :, :) = RepsStruct(i).RMPDR;
 			YR(globIterNum, :, :) = RepsStruct(i).RMVDR;
 			% Xdoa(globIterNum, :, :) = RepsStruct(i).estDOA;
 			Ydoa(globIterNum, :, :) = RepsStruct(i).trueSteeringVector;
@@ -36,5 +39,7 @@ for f = 1:N
 		end
     end
 end
+save('C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV4\dataForPython_train.mat' ...
+    , 'Xw', 'XR', 'XRd', 'Yw', 'YR', 'Xdoa', 'Ydoa', 'params')
 % save('C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV4\dataForPython_train.mat' ...
 %     , 'Xw', 'XR', 'Yw', 'YR', 'Xdoa', 'Ydoa', 'params')
