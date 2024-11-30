@@ -1,8 +1,8 @@
 import torch
 import numpy as np
+import os
 
-from data_helper import (extract_data, create_dataloaders_cov, real_imag_to_hermitian,
-                         abs_phase_rejoin, abs_phase_rejoin_hermitian)
+from data_helper import extract_data, create_dataloaders_cov, real_imag_to_hermitian, create_dataloaders_weights
 from neural_nets import Stage1Network
 from scipy.io import savemat
 
@@ -10,9 +10,10 @@ from scipy.io import savemat
 if __name__ == "__main__":
 
     # path = r"C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV4\dataForPython_train.mat"
-    path = r"C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV4\dataForPython_train.mat"
     # save_path = r"C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV4\NN_results"
-    save_path = r"C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV4\NN_results\train2"
+    path = r"C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV4\dataForPython_train.mat"
+    save_path = r"C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV4\NN_results"
+    stage1_load_path = r"C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV4\NN_results\stage1_run3_20241129_074726"
 
     Xw, Yw, XR, XRd, YR, Ydoa, params = extract_data(path)
 
@@ -20,9 +21,10 @@ if __name__ == "__main__":
     pre_method = 1
 
     _, test_loader_cov, _, idx_test = create_dataloaders_cov(XR, YR, XRd, pre_method, batch_size=batch_size, test_size=0.2)
+    _, test_loader_weights, _, _ = create_dataloaders_weights(Xw, Yw, batch_size=batch_size, test_size=0.2)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = Stage1Network().to(device)
-    checkpoint = torch.load(save_path + '/checkpoint_stage1.pth', map_location=device)
+    checkpoint = torch.load(os.path.join(stage1_load_path, "checkpoint_stage1.pth"), map_location=device)
     model.load_state_dict(checkpoint['model_state_dict'])
 
     inputs_list = []
@@ -48,12 +50,11 @@ if __name__ == "__main__":
     inputs_np_temp = np.array(inputs_list)
 
 
-    if pre_method == 1:
-        input_XRd = real_imag_to_hermitian(inputs_np_temp)
-        label_YR = real_imag_to_hermitian(labels_np_temp[:, 0, :, :])
-        label_XR = real_imag_to_hermitian(labels_np_temp[:,1,:,:])
-        output_YR = real_imag_to_hermitian(outputs_np_temp[:, 0, :, :])
-        output_XR = real_imag_to_hermitian(outputs_np_temp[:, 1, :, :])
+    input_XRd = real_imag_to_hermitian(inputs_np_temp)
+    label_YR = real_imag_to_hermitian(labels_np_temp[:, 0, :, :])
+    label_XR = real_imag_to_hermitian(labels_np_temp[:,1,:,:])
+    output_YR = real_imag_to_hermitian(outputs_np_temp[:, 0, :, :])
+    output_XR = real_imag_to_hermitian(outputs_np_temp[:, 1, :, :])
 
 
     data = {

@@ -11,11 +11,11 @@ load("C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV4\globalParams.mat")
 load("C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV4\NN_results\stage1_train2\data.mat")
 
 %%
-SIRval = -15;
+SIRval = -40;
 SNRval = 25;
 Nval = 2^10;
 intMode = 'CW';
-inputMode = 'CW';
+inputMode = 'filtNoise';
 
 for i = 1:length(pythonParams)
     term1(i) = pythonParams(i).SIR == SIRval;

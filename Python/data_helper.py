@@ -69,26 +69,6 @@ def create_dataloaders_doa(Ydoa, batch_size=32, test_size=0.2, random_state=42, 
 
     return train_loader, test_loader
 
-def plot_losses(train_losses, val_losses):
-    # Set up the figure and axes
-    plt.figure(figsize=(10, 5))
-    plt.plot(train_losses, label='Training Loss')
-    plt.plot(val_losses, label='Validation Loss')
-
-    # Adding title and labels
-    plt.title('Training and Validation Losses')
-    plt.xlabel('Epochs')
-    plt.ylabel('Loss')
-
-    # Add legend
-    plt.legend()
-
-    # Show grid
-    plt.grid(True)
-
-    # Display the plot
-    plt.show()
-
 
 def normalize_data(data):
     if len(data.shape) == 3:
@@ -141,50 +121,32 @@ class CovarianceDataset(Dataset):
         self.XR = XR
         self.YR = YR
         self.XRd = XRd
-        self.normalize_and_process(pre_method)
+        self.normalize_and_process()
 
     def __len__(self):
         return self.XR.shape[0]
 
     def __getitem__(self, idx):
-        inputs = torch.tensor(self.XR[idx], dtype=torch.float)
-        labels = torch.cat((torch.tensor(self.YR[idx], dtype=torch.float), torch.tensor(self.XRd[idx], dtype=torch.float)), dim=0)
+        inputs = torch.tensor(self.XRd[idx], dtype=torch.float)
+        labels = torch.cat((torch.tensor(self.YR[idx], dtype=torch.float), torch.tensor(self.XR[idx], dtype=torch.float)), dim=0)
         return inputs, labels
 
 
-    def normalize_and_process(self, pre_method):
+    def normalize_and_process(self):
         """Normalize complex Hermitian matrices and convert to real-valued format."""
-        if pre_method == 1:
-            XR = normalize_data(self.XR)
-            YR = normalize_data(self.YR)
-            XRd = normalize_data(self.XRd)
-            XR_processed = hermitian_to_real_imag(XR)
-            YR_processed = hermitian_to_real_imag(YR)
-            XRd_processed = hermitian_to_real_imag(XRd)
+        XR = normalize_data(self.XR)
+        YR = normalize_data(self.YR)
+        XRd = normalize_data(self.XRd)
+        XR_processed = hermitian_to_real_imag(XR)
+        YR_processed = hermitian_to_real_imag(YR)
+        XRd_processed = hermitian_to_real_imag(XRd)
 
-            XR_processed = XR_processed.reshape(XR_processed.shape[0], 1, XR_processed.shape[1],
-                                               XR_processed.shape[2])
-            YR_processed = YR_processed.reshape(YR_processed.shape[0], 1, YR_processed.shape[1],
-                                               YR_processed.shape[2])
-            XRd_processed = XRd_processed.reshape(XRd_processed.shape[0], 1, XRd_processed.shape[1],
-                                                  XRd_processed.shape[2])
-
-        elif pre_method == 2:
-            XR = abs_phase_split(self.XR)
-            YR = abs_phase_split(self.YR)
-            XR[:, 0, :, :] = normalize_data(XR[:, 0, :, :])
-            YR[:, 0, :, :] = normalize_data(YR[:, 0, :, :])
-            XR_processed = XR
-            YR_processed = YR
-
-        else:
-            XR_processed = abs_phase_split_hermitian(self.XR)
-            YR_processed = abs_phase_split_hermitian(self.YR)
-            # abs_phase_split_hermitian includes normalization
-            XR_processed = XR_processed.reshape(XR_processed.shape[0], 1, XR_processed.shape[1],
-                                               XR_processed.shape[2])
-            YR_processed = YR_processed.reshape(YR_processed.shape[0], 1, YR_processed.shape[1],
-                                               YR_processed.shape[2])
+        XR_processed = XR_processed.reshape(XR_processed.shape[0], 1, XR_processed.shape[1],
+                                           XR_processed.shape[2])
+        YR_processed = YR_processed.reshape(YR_processed.shape[0], 1, YR_processed.shape[1],
+                                           YR_processed.shape[2])
+        XRd_processed = XRd_processed.reshape(XRd_processed.shape[0], 1, XRd_processed.shape[1],
+                                              XRd_processed.shape[2])
 
         self.XR = XR_processed
         self.YR = YR_processed
