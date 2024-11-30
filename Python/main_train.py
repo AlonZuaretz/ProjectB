@@ -4,8 +4,7 @@ import torch.optim as optim
 import os
 from torch.optim.lr_scheduler import StepLR
 
-from data_helper import (extract_data, create_dataloaders_cov, create_dataloaders_weights,
-                         create_dataloaders_doa)
+from data_helper import extract_data, create_dataloaders
 from neural_nets import Stage1Network, Stage2Network
 from train_stage1 import train_and_validate_stage1
 from train_stage2 import train_and_validate_stage2
@@ -65,8 +64,7 @@ if __name__ == "__main__":
     learning_rate = 5e-3
     pre_method = 1
 
-    train_loader_cov, test_loader_cov, idx_train, idx_test = (
-        create_dataloaders_cov(XR, YR, XRd, pre_method, batch_size=batch_size))
+    cov_train_loader, cov_test_loader, _, _, _, _, _, _ = create_dataloaders(XR, XRd, YR, Yw, Ydoa)
 
     stage1_model = Stage1Network().to(device)
     optimizer = optim.Adam(stage1_model.parameters(), lr=learning_rate)
@@ -81,7 +79,7 @@ if __name__ == "__main__":
 
     ###### Stage 1 training: #######
     if 1 in training_stage:
-        train_and_validate_stage1(stage1_model, train_loader_cov, test_loader_cov,
+        train_and_validate_stage1(stage1_model, cov_train_loader, cov_test_loader,
                                                              criterion, optimizer, scheduler, device, last_epoch,
                                                              epochs_num, save_path, save_flag)
 
@@ -89,17 +87,15 @@ if __name__ == "__main__":
     if 2 in training_stage:
         batch_size = 2048
         epochs_num = 100
-        learning_rate = 1e-2
+        learning_rate = 5e-3
         num_workers = 0
 
-        train_loader_cov, test_loader_cov, idx_train, idx_test = (
-            create_dataloaders_cov(XR, YR, XRd, pre_method, batch_size=batch_size, num_workers=num_workers))
-        train_loader_doa, test_loader_doa = create_dataloaders_doa(Ydoa, batch_size=batch_size, num_workers=num_workers)
-        train_loader_weights, test_loader_weights, _, _ = create_dataloaders_weights(Xw, Yw, batch_size=batch_size, num_workers=num_workers)
+        cov_train_loader, cov_test_loader, weights_train_loader, weights_test_loader, doa_train_loader, doa_test_loader, _, _ = (
+            create_dataloaders(XR, XRd, YR, Yw, Ydoa))
 
         stage2_model = Stage2Network().to(device)
         criterion = nn.MSELoss()
-        optimizer = optim.SGD(stage2_model.parameters(), lr=learning_rate, momentum=0.5, weight_decay=0.01)
+        optimizer = optim.AdamW(stage2_model.parameters(), lr=learning_rate)
         scheduler = StepLR(optimizer, step_size=5, gamma=0.5)
 
         if stage2_load_flag:
@@ -107,11 +103,10 @@ if __name__ == "__main__":
         else:
             last_epoch = 0
 
-
         train_and_validate_stage2(stage1_model, stage2_model,
-                                         train_loader_weights, test_loader_weights,
-                                         train_loader_cov, test_loader_cov,
-                                         train_loader_doa, test_loader_doa,
+                                         weights_train_loader, weights_test_loader,
+                                         cov_train_loader, cov_test_loader,
+                                         doa_train_loader, doa_test_loader,
                                          criterion, optimizer, scheduler, device,
                                          epochs_num, last_epoch, save_path, save_flag)
 

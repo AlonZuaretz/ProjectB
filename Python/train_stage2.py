@@ -266,7 +266,7 @@ def train_and_validate_stage2(model1, model2, train_loader_weights, val_loader_w
         labels_weights_list = []
 
         with torch.set_grad_enabled(is_train):
-            for (_, labels_weights), (inputs_cov, labels_cov), (labels_doa) in zip(loader_weights, loader_cov, loader_doa):
+            for (labels_weights), (inputs_cov, labels_cov), (labels_doa) in zip(loader_weights, loader_cov, loader_doa):
                 # Check if ESC key was pressed during training
                 if is_train and keyboard.is_pressed('esc'):
                     raise KeyboardInterrupt
@@ -275,9 +275,9 @@ def train_and_validate_stage2(model1, model2, train_loader_weights, val_loader_w
                 labels_weights = labels_weights.to(device)
                 labels_doa = labels_doa.to(device)
 
-                # outputs_stage1 = model1(inputs_cov)
-                outputs_stage1 = torch.tensor([])
-                outputs = model2(labels_cov[:,0,:,:], labels_doa)
+                outputs_stage1 = model1(inputs_cov)
+                # outputs_stage1 = torch.tensor([])
+                outputs = model2(outputs_stage1[:,0,:,:], labels_doa)
 
                 if is_last_epoch:
                     inputs_list.append(inputs_cov.cpu().numpy())

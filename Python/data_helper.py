@@ -19,55 +19,29 @@ def extract_data(path):
 
     return Xw, Yw, XR, XRd, YR, Ydoa, params
 
-
-def create_dataloaders_cov(XR, YR, XRd, pre_method, batch_size=32, test_size=0.2, random_state=42, num_workers=0):
-    # Split data into training and testing
+def create_dataloaders(XR, XRd, YR, Yw, Ydoa, batch_size=1024, test_size=0.2, random_state=42, num_workers=0):
     indices = np.arange(XR.shape[0])
-    XR_train, XR_test, YR_train, YR_test, idx_train, idx_test =\
-        train_test_split(XR, YR, indices, test_size=test_size, random_state=random_state)
-
-    XRd_train, XRd_test = XRd[idx_train], XRd[idx_test]
+    XR_train, XR_test, XRd_train, XRd_test, YR_train, YR_test, Yw_train, Yw_test, Ydoa_train, Ydoa_test, idx_train, idx_test = (
+        train_test_split(XR, XRd, YR, Yw, Ydoa, indices, test_size=test_size, random_state=random_state))
 
     # Create datasets
-    train_dataset = CovarianceDataset(XR_train, YR_train, XRd_train, pre_method)
-    test_dataset = CovarianceDataset(XR_test, YR_test, XRd_test, pre_method)
+    cov_train_dataset = CovarianceDataset(XR_train, YR_train, XRd_train)
+    cov_test_dataset = CovarianceDataset(XR_test, YR_test, XRd_test)
+    weights_train_dataset = WeightsDataset(Yw_train)
+    weights_test_dataset = WeightsDataset(Yw_test)
+    doa_train_dataset = DoaDataset(Ydoa_train)
+    doa_test_dataset = DoaDataset(Ydoa_test)
 
     # Create dataloaders
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    cov_train_loader = DataLoader(cov_train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+    cov_test_loader = DataLoader(cov_test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    weights_train_loader = DataLoader(weights_train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+    weights_test_loader = DataLoader(weights_test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    doa_train_loader = DataLoader(doa_train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+    doa_test_loader = DataLoader(doa_test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
-    return train_loader, test_loader, idx_train, idx_test
+    return cov_train_loader, cov_test_loader, weights_train_loader, weights_test_loader, doa_train_loader, doa_test_loader, idx_train, idx_test
 
-
-def create_dataloaders_weights(Xw, Yw, batch_size=32, test_size=0.2, random_state=42, num_workers=0):
-    # Split data into training and testing
-    indices = np.arange(Xw.shape[0])
-    Xw_train, Xw_test, Yw_train, Yw_test, idx_train, idx_test = train_test_split(Xw, Yw, indices, test_size=test_size, random_state=random_state)
-
-    # Create datasets
-    train_dataset = WeightsDataset(Xw_train, Yw_train)
-    test_dataset = WeightsDataset(Xw_test, Yw_test)
-
-    # Create dataloaders
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
-
-    return train_loader, test_loader, idx_train, idx_test
-
-
-def create_dataloaders_doa(Ydoa, batch_size=32, test_size=0.2, random_state=42, num_workers=0):
-    # Split data into training and testing
-    Ydoa_train, Ydoa_test = train_test_split(Ydoa, test_size=test_size, random_state=random_state)
-
-    # Create datasets
-    train_dataset = DoaDataset(Ydoa_train)
-    test_dataset = DoaDataset(Ydoa_test)
-
-    # Create dataloaders
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
-
-    return train_loader, test_loader
 
 
 def normalize_data(data):
@@ -75,30 +49,6 @@ def normalize_data(data):
         return data / np.max(np.abs(data), axis=(1, 2), keepdims=True)
     else:
         return data / np.max(np.abs(data), axis=1, keepdims=True)
-
-
-def abs_phase_split(data):
-    abs_part = np.abs(data)
-    phase_part = np.angle(data)
-    return np.stack([abs_part, phase_part], axis=1)
-
-
-def abs_phase_rejoin(data):
-    abs_part = np.squeeze(data[:, 0, :, :])
-    phase_part = np.squeeze(data[:, 1, :, :])
-    return abs_part * np.exp(1j * phase_part)
-
-
-def abs_phase_split_hermitian(data):
-    abs_part = np.abs(data) / np.max(np.abs(data), axis=(1, 2), keepdims=True)
-    phase_part = np.angle(data) / np.pi
-    return np.tril(abs_part, k=0) + np.triu(phase_part, k=1)
-
-
-def abs_phase_rejoin_hermitian(data):
-    abs_part = np.tril(data, k=0) + np.transpose(np.tril(data, k=-1), (0,2,1))
-    phase_part = np.triu(data, k=1) - np.transpose(np.triu(data, k=1), (0,2,1))
-    return abs_part * np.exp(1j * np.pi * phase_part)
 
 
 def hermitian_to_real_imag(data):
@@ -116,7 +66,7 @@ def real_imag_to_hermitian(matrices):
 
 
 class CovarianceDataset(Dataset):
-    def __init__(self, XR, YR, XRd, pre_method):
+    def __init__(self, XR, YR, XRd):
         # Process and convert data before storing in the dataset
         self.XR = XR
         self.YR = YR
@@ -130,7 +80,6 @@ class CovarianceDataset(Dataset):
         inputs = torch.tensor(self.XRd[idx], dtype=torch.float)
         labels = torch.cat((torch.tensor(self.YR[idx], dtype=torch.float), torch.tensor(self.XR[idx], dtype=torch.float)), dim=0)
         return inputs, labels
-
 
     def normalize_and_process(self):
         """Normalize complex Hermitian matrices and convert to real-valued format."""
@@ -154,31 +103,23 @@ class CovarianceDataset(Dataset):
 
 
 class WeightsDataset(Dataset):
-    def __init__(self, Xw, Yw):
+    def __init__(self, Yw):
         # Process and convert data before storing in the dataset
-        self.Xw = Xw
         self.Yw = Yw
         self.normalize_and_process()
 
     def __len__(self):
-        return self.Xw.shape[0]
+        return self.Yw.shape[0]
 
     def __getitem__(self, idx):
-        return torch.tensor(self.Xw[idx], dtype=torch.float), torch.tensor(self.Yw[idx], dtype=torch.float)
+        return torch.tensor(self.Yw[idx], dtype=torch.float)
 
     def normalize_and_process(self):
-        """Normalize complex Hermitian matrices and convert to real-valued format."""
-        Xw = self.Xw
-        Yw = self.Yw
-        Xw_real = np.real(Xw)
+        Yw = normalize_data(self.Yw)
         Yw_real = np.real(Yw)
-        Xw_imag = np.imag(Xw)
         Yw_imag = np.imag(Yw)
-
-        Xw_processed = np.concatenate((Xw_real, Xw_imag), axis=1)
         Yw_processed = np.concatenate((Yw_real, Yw_imag), axis=1)
 
-        self.Xw = Xw_processed
         self.Yw = Yw_processed
 
 
@@ -196,7 +137,7 @@ class DoaDataset(Dataset):
 
     def normalize_and_process(self):
         """Normalize complex Hermitian matrices and convert to real-valued format."""
-        Ydoa = self.Ydoa
+        Ydoa =  normalize_data(self.Ydoa)
         Ydoa_real = np.real(Ydoa)
         Ydoa_imag = np.imag(Ydoa)
 
