@@ -1,13 +1,13 @@
-import keyboard  # Import the keyboard module
+import keyboard
 import os
 import time
 import numpy as np
 import torch
 from scipy.io import savemat
 
-def train_and_validate_stage1(model, train_loader, val_loader, criterion, optimizer, scheduler,
-                           device, epochs, last_epoch, save_path, save_flag):
-    model.train()
+
+def train_and_val(model, train_loader, val_loader, criterion, optimizer, scheduler,
+                  device, epochs, last_epoch, save_path, save_flag):
 
     # Create a new folder for each run
     if save_flag:
@@ -23,24 +23,11 @@ def train_and_validate_stage1(model, train_loader, val_loader, criterion, optimi
     val_maes = []
     best_val_loss = float('inf')
     val_interval = 5
-    best_model_state_dict = None
 
-    # Lists to store inputs, outputs, and labels for final evaluation
-    train_inputs = []
-    train_outputs = []
-    train_labels = []
-    val_inputs = []
-    val_outputs = []
-    val_labels = []
-
-    def run_epoch(loader, is_train, is_last_epoch=False):
+    def run_epoch(loader, is_train):
         running_loss = 0.0
         running_mae = 0.0
         model.train() if is_train else model.eval()
-
-        inputs_list = []
-        outputs_list = []
-        labels_list = []
 
         with torch.set_grad_enabled(is_train):
             for inputs, labels in loader:
@@ -53,12 +40,6 @@ def train_and_validate_stage1(model, train_loader, val_loader, criterion, optimi
                     optimizer.zero_grad()
 
                 outputs = model(inputs)
-
-                if is_last_epoch:
-                    inputs_list.append(inputs.cpu().numpy())
-                    outputs_list.append(outputs.cpu().numpy())
-                    labels_list.append(labels.cpu().numpy())
-
                 loss = criterion(outputs, labels)
                 mae = torch.nn.functional.l1_loss(outputs, labels, reduction='mean')
                 if is_train:
@@ -69,22 +50,21 @@ def train_and_validate_stage1(model, train_loader, val_loader, criterion, optimi
 
         avg_loss = running_loss / len(loader.dataset)
         avg_mae = running_mae / len(loader.dataset)
-
-        return avg_loss, avg_mae, inputs_list, outputs_list, labels_list
+        return avg_loss, avg_mae
 
     try:
         for epoch in range(last_epoch, epochs):
             start_time = time.time()  # Start timing the epoch
 
             # Run training epoch
-            epoch_train_loss, _, _, _, _ = run_epoch(train_loader, is_train=True)
+            epoch_train_loss, _ = run_epoch(train_loader, is_train=True)
             train_losses.append(epoch_train_loss)
             print(f"Epoch {epoch + 1}, Train Loss: {epoch_train_loss}, Time: {time.time() - start_time:.2f} seconds")
 
             # Run validation epoch if it's the appropriate interval
             if (epoch + 1) % val_interval == 0:
                 start_time = time.time()  # Start timing the epoch
-                epoch_val_loss, epoch_val_mae, _, _, _ = run_epoch(val_loader, is_train=False)
+                epoch_val_loss, epoch_val_mae = run_epoch(val_loader, is_train=False)
                 val_losses.append(epoch_val_loss)
                 val_maes.append(epoch_val_mae)
 
@@ -94,9 +74,8 @@ def train_and_validate_stage1(model, train_loader, val_loader, criterion, optimi
                 # Check if the current validation loss is the best
                 if save_flag and epoch_val_loss < best_val_loss:
                     best_val_loss = epoch_val_loss
-                    best_model_state_dict = model.state_dict()
                     torch.save({
-                        'model_state_dict': best_model_state_dict,
+                        'model_state_dict': model.state_dict(),
                         'optimizer_state_dict': optimizer.state_dict(),
                         'scheduler_state_dict': scheduler.state_dict(),
                         'epoch': epoch + 1,
@@ -110,37 +89,14 @@ def train_and_validate_stage1(model, train_loader, val_loader, criterion, optimi
 
     finally:
         if save_flag:
-            print("Running final evaluation and saving inputs/outputs...")
             info = {
                 'train_loss': np.array(train_losses),
                 'val_loss': np.array(val_losses),
                 'val_mae': np.array(val_maes),
             }
             savemat(os.path.join(run_folder, "train_info_stage1.mat"), info)
+            print("Information saved.")
 
-            _, _, train_inputs_list, train_outputs_list, train_labels_list = run_epoch(train_loader, is_train=False, is_last_epoch=True)
-            if best_model_state_dict is not None:
-                model.load_state_dict(best_model_state_dict)
-            _, _, val_inputs_list, val_outputs_list, val_labels_list = run_epoch(val_loader, is_train=False, is_last_epoch=True)
 
-            # Save all collected inputs/outputs and labels separately for train and validation
-            train_inputs.extend(train_inputs_list)
-            train_outputs.extend(train_outputs_list)
-            train_labels.extend(train_labels_list)
 
-            val_inputs.extend(val_inputs_list)
-            val_outputs.extend(val_outputs_list)
-            val_labels.extend(val_labels_list)
 
-            data = {
-                'train_inputs': np.vstack(train_inputs) if train_inputs else np.array([]),
-                'train_outputs': np.vstack(train_outputs) if train_outputs else np.array([]),
-                'train_labels': np.vstack(train_labels) if train_labels else np.array([]),
-                'val_inputs': np.vstack(val_inputs) if val_inputs else np.array([]),
-                'val_outputs': np.vstack(val_outputs) if val_outputs else np.array([]),
-                'val_labels': np.vstack(val_labels) if val_labels else np.array([]),
-            }
-            savemat(os.path.join(run_folder, "data.mat"), data)
-            print("Final inputs, outputs, and labels saved to data.mat.")
-
-    return

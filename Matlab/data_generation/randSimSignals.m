@@ -18,7 +18,6 @@ function varargout = randSimSignals(params)
     intBW = params.intBW;
     inputBW = params.inputBW;
     
-    % rng(seed)
     
     % simulate signal of interest:
     if nargout == 3

@@ -1,73 +1,41 @@
+% Script to generate the exact signals used to achieve samples for training
+
 clear
-load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV1\allSIR\globalParams.mat")
-load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV1\allSIR\raw\run_1_1_1_1_1_1.mat");
-relData = RepsStruct(2);
-fsBB = params.fsBB;
+load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV5\globalParams.mat")
+load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV5\raw_data\run_1_1_1.mat");
+relData = NNdata(1);
 
+%%
+% angular resolution:
+dtheta = addParams.dtheta; % [deg]
+thetaMin = addParams.thetaMin; % [deg]
+thetaMax = addParams.thetaMax; % [deg]
+thetaDist = addParams.thetaDist; % [deg]
 
-params.SNR = relData.params.SNR;
-params.SIR = relData.params.SIR;
-params.numInt = relData.params.numInt;
-params.inputAngle = relData.params.inputAngle;
-params.interferenceAngle = relData.params.interferenceAngle;
+% changing parameters:
+snrRange = addParams.snrRange;  % vector of SNR values
+sirRange = addParams.sirRange;  % vector of SIR values
+numInt = addParams.numInt; % vector of number of interferences
 
-inputAngle = params.inputAngle;
-interferenceAngle = params.interferenceAngle;
+intMode = addParams.intMode;
+inputMode = addParams.inputMode;
+
+nInt = relData.params.numInt;
+intM = relData.params.intMode;
+inputM = relData.params.inputMode;
+interferenceAngle = relData.params.interferenceAngle;
+inputAngle = relData.params.inputAngle;
+seed = relData.params.seed;
+
+params.numInt = nInt;
+params.interferenceAngle = interferenceAngle;
+params.inputAngle = inputAngle;
 
 mvdrBeamFormer = MyMVDRBeamFormer(params);
 inputSteeringVector = mvdrBeamFormer.SteeringVector;
 intSteeringVector = mvdrBeamFormer.calcSteeringVec(interferenceAngle);
 
 
-rng(relData.params.seed)
-params.N = params.Nopt;
-params.T = params.Topt;
-params.t = params.topt;
-
-% create signals for optimal MVDR matrix
-% calculation:
-params.intMode = 'noise';
-[SoA_noise, noise] = randSimSignals(params);
-
-% Optimal reception - no G/P distortion:
-GPflag = false;
-interference = myCollectPlaneWave(SoA_noise, params, interferenceAngle,  intSteeringVector, GPflag);
-rxInt = interference + noise;
-
-
-intM = relData.params.intMode;
-inputM = relData.params.inputMode;
-
-nSamples = randi([4, 2^16]);
-T = nSamples/fsBB; 
-t = (0:nSamples-1).' / fsBB;
-
-if strcmp(intM, 'filtNoise')
-    intBW = randi([1,6]);
-else
-    intBW = [];
-end
-if strcmp(inputM, 'filtNoise')
-    inputBW = randi([1,6]);
-else
-    inputBW = [];
-end
-
-params.N = nSamples;
-params.T = T;
-params.t = t;
-params.intMode = intM;
-params.inputMode = inputM;
-params.intBW = intBW;
-params.inputBW = inputBW;
-
-[SoA_corr, noise, SoI] = randSimSignals(params);
-
-% add G/P distortions in the reception
-GPflag = true;
-x = myCollectPlaneWave(SoI, params, inputAngle, inputSteeringVector, GPflag);
-interference = myCollectPlaneWave(SoA_corr, params, interferenceAngle, intSteeringVector, GPflag);
-rxSignal = x + interference + noise;
-
-% clearvars -except rxInt rxSignal
-    
+NNdata = struct();
+currIter = seed;
+struct = mainIterator(params, mvdrBeamFormer, nInt, snrRange, sirRange, inputAngle, interferenceAngle, intSteeringVector, inputSteeringVector, intM, inputM, currIter);
