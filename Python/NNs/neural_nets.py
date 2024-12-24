@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch
 
-from NN_blocks import ConvBlock, ResidualBlock
+from NNs.NN_blocks import ConvBlock, ResidualBlock
 
 
 def count_parameters(model):

@@ -10,13 +10,11 @@ from scipy.io import savemat
 
 if __name__ == "__main__":
 
-    # base_path = r"C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV4"
-    base_path = r"C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV4"
-    path = base_path + r"\dataForPython_train.mat"
-    save_path = base_path + r"\NN_results"
-    load_path = base_path + r"\NN_results\stage1_run3_20241129_074726"
-
-    save_flag = True
+    base_path = r"C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV6"
+    # base_path = r"C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV5"
+    path = base_path + r"\dataForPython.mat"
+    save_path =  r"C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV5\NN_results\stage1_run_20241210_141656"
+    load_path =  r"C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV5\NN_results\stage1_run_20241210_141656"
 
     Xw, Yw, XR, XRd, YR, Ydoa, params = extract_data(path)
 
@@ -26,9 +24,9 @@ if __name__ == "__main__":
     _, _, cov_test_loader, _, _, _, _, _, _, _, _, idx_test = create_dataloaders(XR, XRd, YR, Yw, Ydoa)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = Stage1Network().to(device)
+    model = Stage1Network().double().to(device)
     checkpoint_path = os.path.join(load_path, "checkpoint_stage1.pth")
-    checkpoint = torch.load('checkpoint_stage1.pth', map_location=device)
+    checkpoint = torch.load(checkpoint_path, map_location=device)
     model.load_state_dict(checkpoint['model_state_dict'])
 
     inputs_list = []
@@ -67,4 +65,4 @@ if __name__ == "__main__":
         'Indexes': idx_test,
         'pythonParams': params[0, idx_test]
     }
-    savemat(save_path + r"\test_results.mat", data)
+    savemat(save_path + r"\test_results_over_V6.mat", data)

@@ -2,7 +2,8 @@ clear
 set(0, 'DefaultFigureWindowStyle', 'docked');
 addpath('Matlab\mvdr_algo\')
 
-globDir = 'C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV5';
+% globDir = 'C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV6';
+globDir = 'C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV7';
 paramsDir = '';
 dataDir = '\raw_data';
 saveParamsDir = [globDir, paramsDir];
@@ -40,21 +41,20 @@ carrierFreq = params.carrierFreq;
 
 % angular resolution:
 dtheta = 1; % [deg]
-thetaMin = -60; % [deg]
-thetaMax = 60; % [deg]
-thetaDist = 10; % [deg]
+thetaRange = [-60, 60]; % [deg]
+thetaDistRange = [40, 90]; % [deg]
 
 % changing parameters:
 snrRange = [20, 40];  % vector of SNR values
-sirRange = [-50, -10];  % vector of SIR values
+sirRange = [-30, -5];  % vector of SIR values
 numInt = 1; % vector of number of interferences
 
 intMode = ["filtNoise", "CW"];
 inputMode = ["filtNoise", "CW"];
 
 % how many times to randomize:
-randAnglesNum = 1000;
-randReps = 100;
+randAnglesNum = 10000;
+randReps = 10;
 
 
 N1 = length(numInt);
@@ -67,9 +67,8 @@ Nreps = N1 * N2 * N3 * N4 * N5
 
 % Additional parameters to save:
 addParams.dtheta = dtheta;
-addParams.thetaMin = thetaMin;
-addParams.thetaMax = thetaMax;
-addParams.thetaDist = thetaDist;
+addParams.thetaRange = thetaRange;
+addParams.thetaDistRange = thetaDistRange;
 addParams.snrRange = snrRange;
 addParams.sirRange = sirRange;
 addParams.numInt = numInt;
@@ -104,15 +103,15 @@ for i1 = 1:N1 % iterate through number of interferences
 
             for i4 = 1:N4 % iterate through a set of random angles
                 % generate avoidance angles:
-                interferenceAngle = randi([thetaMin, thetaMax], numInt, 1);
+                interferenceAngle = randi(thetaRange, numInt, 1);
                 interferenceAngle = [interferenceAngle.' ; zeros(1, numInt)];
                 
                 % generate input angle:
                 valid = false;  % Initialization of the validity check
                 while ~valid
-                    inputAngle = randi([thetaMin, thetaMax], 1);
+                    inputAngle = randi(thetaRange, 1);
                     distances = abs(inputAngle - interferenceAngle(1,:)); 
-                    if all(distances >= thetaDist)  % Check if all distances are at least c
+                    if distances >= thetaDistRange(1) && distances <= thetaDistRange(2)  % Check if all distances are at least c
                         valid = true;  % Set valid to true to break the loop
                     end
                 end

@@ -101,8 +101,8 @@ class CovarianceDataset(Dataset):
         return self.XR.shape[0]
 
     def __getitem__(self, idx):
-        inputs = torch.tensor(self.XRd[idx], dtype=torch.float)
-        labels = torch.cat((torch.tensor(self.YR[idx], dtype=torch.float), torch.tensor(self.XR[idx], dtype=torch.float)), dim=0)
+        inputs = torch.tensor(self.XRd[idx], dtype=torch.float64)
+        labels = torch.cat((torch.tensor(self.YR[idx], dtype=torch.float64), torch.tensor(self.XR[idx], dtype=torch.float64)), dim=0)
         return inputs, labels
 
     def normalize_and_process(self):

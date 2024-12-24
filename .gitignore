@@ -13,3 +13,8 @@ Matlab.zip
 *.docx
 *.pth
 /dataV5
+/dataV6
+/Python/train/wandb
+/dataV7
+/.idea
+*.pyc
