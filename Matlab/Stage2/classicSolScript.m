@@ -1,30 +1,30 @@
-clear
+% clear
 set(0, 'DefaultFigureWindowStyle', 'docked');
-load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV5\globalParams.mat")
-load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV5\NN_results\stage1_run_20241210_141656\test_results_over_V6.mat")
+load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV7\globalParams.mat")
+load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV7\NN_results\stage1_run_20241224_052213\test_results.mat")
 
 %%
 % Filter:
-term1 = zeros(size(pythonParams,2),1); term2 = zeros(size(pythonParams,2),1); term3 = zeros(size(pythonParams,2),1); term4 = zeros(size(pythonParams,2),1);
-for i = 1:length(pythonParams)
-    term1(i) = pythonParams(i).SIR >= -15;
-end
-for i = 1:length(pythonParams)
-    term2(i) = pythonParams(i).SNR <= inf;
-end
-for i = 1:length(pythonParams)
-    term3(i) = abs(double(pythonParams(i).inputAngle(1)) - double(pythonParams(i).interferenceAngle(1))) >= 40;
-    term4(i) = abs(double(pythonParams(i).inputAngle(1)) - double(pythonParams(i).interferenceAngle(1))) <= 80;
-end
-terms = term1 .* term2 .* term3;
-relIdxs = find(terms);
-pythonParams = pythonParams(relIdxs);
-label_YR = label_YR(relIdxs,:,:);
-label_XR = label_XR(relIdxs,:,:);
-input_XRd = input_XRd(relIdxs,:,:);
-output_YR = output_YR(relIdxs,:,:);
-output_XR = output_XR(relIdxs,:,:);
-Indexes = Indexes(relIdxs);
+% term1 = zeros(size(pythonParams,2),1); term2 = zeros(size(pythonParams,2),1); term3 = zeros(size(pythonParams,2),1); term4 = zeros(size(pythonParams,2),1);
+% for i = 1:length(pythonParams)
+%     term1(i) = pythonParams(i).SIR >= -15;
+% end
+% for i = 1:length(pythonParams)
+%     term2(i) = pythonParams(i).SNR <= inf;
+% end
+% for i = 1:length(pythonParams)
+%     term3(i) = abs(double(pythonParams(i).inputAngle(1)) - double(pythonParams(i).interferenceAngle(1))) >= 40;
+%     term4(i) = abs(double(pythonParams(i).inputAngle(1)) - double(pythonParams(i).interferenceAngle(1))) <= 80;
+% end
+% terms = term1 .* term2 .* term3;
+% relIdxs = find(terms);
+% pythonParams = pythonParams(relIdxs);
+% label_YR = label_YR(relIdxs,:,:);
+% label_XR = label_XR(relIdxs,:,:);
+% input_XRd = input_XRd(relIdxs,:,:);
+% output_YR = output_YR(relIdxs,:,:);
+% output_XR = output_XR(relIdxs,:,:);
+% Indexes = Indexes(relIdxs);
 
 % sort by seed:
 [B, I] = sort([pythonParams.seed]);
@@ -52,10 +52,10 @@ steeringVecMat = zeros(size(thetaScan,2), M);
 for i = 1:length(thetaScan)
     theta = [thetaScan(i) ; 0];
     steeringVecMat(i, :) = phased.internal.steeringvec(ula_array.getElementPosition,...
-        carrierFreq,c, theta, 0);
+        carrierFreq, c, theta, 0);
 end
 %% Estimate Input Angle:
-pyIdx = 2118;
+pyIdx = 6617;
 pyParams = pythonParams(pyIdx);
 MPDR = squeeze(output_XR(pyIdx,:,:)); % MPDR
 MVDR = squeeze(output_YR(pyIdx,:,:));
@@ -66,9 +66,9 @@ P_music_MVDR = musicSpectEst(MVDR, steeringVecMat);
 
 angleDiff = abs(double(pyParams.inputAngle(1)) - double(pyParams.interferenceAngle(1)));
 SIR = double(pyParams.SIR);
-[~, locs] = findpeaks(log10(P_music_MPDR), thetaScan, 'SortStr', 'ascend');
+[~, locs] = findpeaks(log10(P_music_MPDR), thetaScan, 'SortStr', 'descend', 'MinPeakProminence', 1);
 
-estAngle = locs(1);
+estAngle = locs(2);
 angleError = abs(estAngle - double(pyParams.inputAngle(1)));
 
 disp("input Angle = " + num2str(pyParams.inputAngle(1)))
@@ -88,18 +88,19 @@ P_pc = mvdrSpectEst(R_pc, steeringVecMat);
 figure;
 hold on;
 plot(thetaScan, 10*log10(P_music_MPDR));
-plot(thetaScan, 10*log10(P_music_MVDR))
+% plot(thetaScan, 10*log10(P_music_MVDR))
 plot(thetaScan, 10*log10(P_pc))
 
 yyaxis right;
-pattern(params.ula_array,params.carrierFreq,-90:90,0,'Weights',w','Type','directivity',...
+pattern(params.ula_array,params.carrierFreq,-90:90,0,'Weights',w.','Type','directivity',...
     'PropagationSpeed',params.c,...
     'CoordinateSystem','rectangular');
 
 xline(pyParams.inputAngle(1));
 xline(pyParams.interferenceAngle(1));
 
-legend('MPDR - MUSIC', 'MVDR - MUSIC', 'MVDR - PC', 'weights')
+% legend('MPDR - MUSIC', 'MVDR - MUSIC', 'MVDR - PC', 'weights')
+legend('MPDR - MUSIC', 'MPDR - PC', 'weights')
 
 
 

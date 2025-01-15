@@ -5,7 +5,10 @@ function [w, R_r] = pc_beamformer(R, npc, numelements, angle)
 % with the white noise s.t. the components that will be in the final 
 % matrix would be the eigenvectors of the signal and the interferers.
 
-v_m = exp(1j*pi*((0:numelements-1)')*sin(deg2rad(angle)));
+
+v_m = conj(exp(1j*pi*((0:numelements-1)')*sin(deg2rad(angle))));
+
+
 [V, D] = eig(R, 'vector');
 [D, ind] = sort(D,"descend");
 V = V(:, ind);
@@ -15,11 +18,5 @@ SSI = SSI_full(1:npc,1:npc);
 U_SI = V(:,1:npc);
 R_r = U_SI*SSI*U_SI';
 
-invR = inv(R_r);
-denominator = v_m' * invR * v_m;%#ok
-nominator = invR * v_m;%#ok
-w = (nominator / denominator)';
-
-
-% w = (v_m.'*U_SI*(SSI^-1)*U_SI')/((v_m'*U_SI*(SSI^-1)*U_SI'*v_m)^-1);
+w = (v_m.'*U_SI*(SSI^-1)*U_SI')*((v_m'*U_SI*(SSI^-1)*U_SI'*v_m)^-1);
 end

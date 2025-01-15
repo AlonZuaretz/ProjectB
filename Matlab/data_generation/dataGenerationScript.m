@@ -8,7 +8,7 @@ paramsDir = '';
 dataDir = '\raw_data';
 saveParamsDir = [globDir, paramsDir];
 saveDataDir = [globDir, dataDir];
-saveFlag = true;
+saveFlag = false;
 
 if saveFlag
     % Check if the folder exists

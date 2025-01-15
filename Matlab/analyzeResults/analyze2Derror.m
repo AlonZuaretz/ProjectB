@@ -1,22 +1,22 @@
 clear
 set(0, 'DefaultFigureWindowStyle', 'docked');
-load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV5\globalParams.mat")
-load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV5\NN_results\stage1_run_20241210_141656\test_results_over_V6.mat")
+load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV7\globalParams.mat")
+load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV7\NN_results\stage1_run_20241224_052213\test_results.mat")
 
 
 % Filter:
-term1 = zeros(size(pythonParams,2),1); term2 = zeros(size(pythonParams,2),1); term3 = zeros(size(pythonParams,2),1);
-for i = 1:length(pythonParams)
-    % term1(i) = pythonParams(i).SIR <= -40;
-    term1(i) = pythonParams(i).SIR >= -15;
-end
-for i = 1:length(pythonParams)
-    % term2(i) = pythonParams(i).SNR >= 40;
-    term2(i) = pythonParams(i).SNR <= 20;
-end
-for i = 1:length(pythonParams)
-    term3(i) = abs(double(pythonParams(i).inputAngle(1)) - double(pythonParams(i).interferenceAngle(1))) >= 40;
-end
+% term1 = zeros(size(pythonParams,2),1); term2 = zeros(size(pythonParams,2),1); term3 = zeros(size(pythonParams,2),1);
+% for i = 1:length(pythonParams)
+%     % term1(i) = pythonParams(i).SIR <= -40;
+%     term1(i) = pythonParams(i).SIR >= -15;
+% end
+% for i = 1:length(pythonParams)
+%     % term2(i) = pythonParams(i).SNR >= 40;
+%     term2(i) = pythonParams(i).SNR <= 20;
+% end
+% for i = 1:length(pythonParams)
+%     term3(i) = abs(double(pythonParams(i).inputAngle(1)) - double(pythonParams(i).interferenceAngle(1))) >= 40;
+% end
 % terms = term1 .* term2 .* term3;
 % relIdxs = find(terms);
 % pythonParams = pythonParams(relIdxs);
@@ -55,29 +55,40 @@ for i = 1:length(thetaScan)
 end
 
 %%
-
+angleError = zeros(length(pythonParams),1);
+SIR = zeros(length(pythonParams),1);
+angleDiff = zeros(length(pythonParams),1);
 for i = 1:length(pythonParams)
     pyParams = pythonParams(i);
     R = squeeze(output_XR(i,:,:));
-    Rnorm = R/ max(abs(R), [], 'all');
-    P_music = musicSpectEst(Rnorm, steeringVecMat); 
+    P_music = musicSpectEst(R, steeringVecMat); 
     angleDiff(i) = abs(double(pyParams.inputAngle(1)) - double(pyParams.interferenceAngle(1)));
     % Sdiff(i) = abs(double(pyParams.SNR) - double(pyParams.SIR));
-    Sdiff(i) = double(pyParams.SIR);
-    [~, locs] = findpeaks(log10(P_music), thetaScan, 'SortStr', 'ascend');
-    if length(locs) ~= 2
+    SIR(i) = double(pyParams.SIR);
+    [~, locs] = findpeaks(log10(P_music), thetaScan, 'SortStr', 'descend', 'MinPeakProminence', 1);
+    if length(locs) < 2
+        angleError(i) = NaN;
         continue;
     end
-    estAngle = locs(1);
+    estAngle = locs(2);
     angleErrorTmp = abs(estAngle - double(pyParams.inputAngle(1)));
     angleError(i) = angleErrorTmp;
 end
+validIdxs = find(~isnan(angleError));
+angleDiff = angleDiff(validIdxs);
+SIR = SIR(validIdxs);
+angleError = angleError(validIdxs);
+
+errorMat = [angleError, validIdxs, SIR, angleDiff];
+[~, I] = sort(angleError, 'descend');
+errorMat = errorMat(I, :);
+
 
 %%
 angleDiffVec = min(angleDiff):max(angleDiff);
-SdiffVec = min(Sdiff):max(Sdiff);
+SIRvec = min(SIR):max(SIR);
 % Combine angleDiff, Sdiff, and angleError into a single matrix
-data = [angleDiff(:), Sdiff(:), angleError(:)];
+data = [angleDiff(:), SIR(:), angleError(:)];
 
 % Find unique (angleDiff, Sdiff) pairs and compute their average angleError
 [uniquePairs, ~, idx] = unique(data(:, 1:2), 'rows'); % Unique rows
@@ -89,7 +100,7 @@ SdiffUnique = uniquePairs(:, 2);
 angleErrorAvg = avgError;
 
 % Interpolate the averaged data onto a regular grid
-[X, Y] = meshgrid(angleDiffVec, SdiffVec);
+[X, Y] = meshgrid(angleDiffVec, SIRvec);
 Z = griddata(angleDiffUnique, SdiffUnique, angleErrorAvg, X, Y, 'linear');
 % Z(Z<=0.5) = 0;
 % Z(Z>0.5 & Z<=1.5) = 1;
@@ -98,7 +109,7 @@ Z(Z>10) = 10;
 
 % Plot Heatmap
 figure;
-imagesc(angleDiffVec, SdiffVec, Z); % Heatmap
+imagesc(angleDiffVec, SIRvec, Z); % Heatmap
 colorbar; % Display color scale
 xlabel('Angle Difference (degrees)');
 ylabel('SIR [dB]');

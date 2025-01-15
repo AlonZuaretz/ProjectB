@@ -55,7 +55,7 @@ for i = 1:length(thetaScan)
 end
 
 %%
-idx = 5;
+idx = 165;
 true_MVDR = squeeze(label_YR(idx,:,:));
 true_MPDR = squeeze(label_XR(idx, :,:));
 distorted_MPDR = squeeze(input_XRd(idx,:,:));
@@ -64,7 +64,7 @@ output_MPDR = squeeze(output_XR(idx,:,:));
 pyParams = pythonParams(idx);
 
 Matrice_cells = [{distorted_MPDR}, {distorted_MPDR}, {true_MVDR}, {true_MPDR}, {output_MVDR}, {output_MPDR}];
-Matrice_cells_str = ["Distorted MPDR", "distorted_MPDR", "MVDR", "MPDR", "Estimated MVDR", "Estimated MPDR"];
+Matrice_cells_str = ["Distorted R(SoI + SoA)", "distorted_MPDR", "R(SoA)", "R(SoI + SoA)", "Estimated MVDR", "Estimated MPDR"];
 
 disp("input Angle = " + num2str(pyParams.inputAngle(1)))
 disp("interference Angle = " + num2str(pyParams.interferenceAngle(1)))
@@ -86,7 +86,7 @@ for ii = 1:length(Matrice_cells)
     end
     R = Matrice_cells{ii};
     Rnorm = R/ max(abs(R), [], 'all');
-    P_mvdr = mvdr(Rnorm, steeringVecMat); 
+    P_mvdr = mvdrSpectEst(Rnorm, steeringVecMat); 
     P_music = musicSpectEst(Rnorm, steeringVecMat); 
     
     
@@ -98,13 +98,13 @@ for ii = 1:length(Matrice_cells)
     plot(thetaScan, 20*log10(abs(P_music)))
     
     
-    xline(pythonParams(idx).inputAngle(1));
-    xline(pythonParams(idx).interferenceAngle(1));
+    xline(pythonParams(idx).inputAngle(1), 'color', 'm', 'LineWidth',1);
+    xline(pythonParams(idx).interferenceAngle(1), 'color', 'r', 'LineWidth',1);
     
     title(Matrice_cells_str(ii))
     xlabel('Angle [deg]')
     
-    legend('MVDR', 'MUSIC', '', '')
+    legend('MVDR','MUSIC', 'SoI AoA', 'SoA AoA')
 
 end
 
@@ -112,12 +112,4 @@ f.Visible = 'on';
 
 %%
 
-function P = mvdr(R, steeringVecMat)
-    P = zeros(size(steeringVecMat,1)); % Pre-allocate MUSIC spectrum
-    Rinv = inv(R);
-    for i = 1:size(steeringVecMat,1)
-        a = steeringVecMat(i,:).';
-        P(i) = 1 / (a' * Rinv * a); %#ok
-    end
-    P = abs(P) / max(abs(P));
-end
+
