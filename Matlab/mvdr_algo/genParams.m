@@ -19,13 +19,13 @@ function paramsOut = genParams(varargin)
     N = size(t,1);
     intMode = 'noise'; % interference mode (noise or correlated)
     ula_array = phased.ULA('NumElements',M,'ElementSpacing',d);
-    load('Matlab\data_generation\element_gain_mismatch.mat', 'element_gain_mismatch');
-    load('Matlab\data_generation\element_ang_mismatch.mat', 'element_ang_mismatch');
+    load('Matlab\data_generation\element_gain_mismatch_interp.mat', 'element_gain_mismatch_interp');
+    load('Matlab\data_generation\element_ang_mismatch_interp.mat', 'element_ang_mismatch_interp');
 
     
     numInt = 1;
     SNR = 20; %dB
-    SIR = -50; %dB
+    SIR = -20; %dB
     if nargin == 1
         SNR = varargin{1};
     end
@@ -39,10 +39,10 @@ function paramsOut = genParams(varargin)
     SINR = 10*log10(SINR_lin);
     
     % angles:
-    inputAngle = [10;0];
+    inputAngle = [-20;0];
     switch numInt
         case 1
-            interferenceAngle = [-10;0];
+            interferenceAngle = [30;0];
         case 2
             interferenceAngle = [[-30 ; 0] , [20;0]];
         case 3
@@ -59,8 +59,8 @@ function paramsOut = genParams(varargin)
     paramsOut.d = d;
     paramsOut.fs = fs;
     paramsOut.ula_array = ula_array;
-    paramsOut.gainMatrix = element_gain_mismatch;
-    paramsOut.phaseMatrix = element_ang_mismatch;
+    paramsOut.gainMatrix = element_gain_mismatch_interp;
+    paramsOut.phaseMatrix = element_ang_mismatch_interp;
     paramsOut.T = T;
     paramsOut.t = t;
     paramsOut.N = N;

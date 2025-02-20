@@ -1,7 +1,7 @@
 % Script to generate the exact signals used to achieve samples for training
 
 clear
-load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV5\globalParams.mat")
+load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV7\globalParams.mat")
 load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV5\raw_data\run_1_1_1.mat");
 relData = NNdata(1);
 

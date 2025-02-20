@@ -1,10 +1,10 @@
 clear
 set(0, 'DefaultFigureWindowStyle', 'docked');
-% load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV7\globalParams.mat")
-% load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV7\NN_results\stage1_run_20241224_052213\test_results.mat")
+load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV7\globalParams.mat")
+load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV7\NN_results\stage1_run_20241224_052213\test_results.mat")
 
-load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV5\globalParams.mat")
-load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV5\NN_results\stage1_run_20241210_141656\test_results.mat")
+% load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV5\globalParams.mat")
+% load("C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV5\NN_results\stage1_run_20241210_141656\test_results.mat")
 
 %%
 % Filter:
