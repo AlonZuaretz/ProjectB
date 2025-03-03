@@ -10,18 +10,18 @@ from scipy.io import savemat
 
 if __name__ == "__main__":
 
-    base_path = r"C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV6"
+    base_path = r"C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV7"
     # base_path = r"C:\Users\alonz\OneDrive - Technion\Documents\GitHub\ProjectB\dataV5"
     path = base_path + r"\dataForPython.mat"
-    save_path =  r"C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV5\NN_results\stage1_run_20241210_141656"
-    load_path =  r"C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV5\NN_results\stage1_run_20241210_141656"
+    save_path =  r"C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV7\NN_results\stage1_run_20250222_110852"
+    load_path =  r"C:\Users\alon.zuaretz\Documents\GitHub\ProjectB\dataV7\NN_results\stage1_run_20250222_110852"
 
-    Xw, Yw, XR, XRd, YR, Ydoa, params = extract_data(path)
+    Xw, Yw, XR, XRd, YR, params = extract_data(path)
 
     batch_size = 1024
     pre_method = 1
 
-    _, _, cov_test_loader, _, _, _, _, _, _, _, _, idx_test = create_dataloaders(XR, XRd, YR, Yw, Ydoa)
+    _, _, cov_test_loader, _, _, _, _, _, idx_test = create_dataloaders(XR, XRd, YR, Yw)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = Stage1Network().double().to(device)
@@ -65,4 +65,4 @@ if __name__ == "__main__":
         'Indexes': idx_test,
         'pythonParams': params[0, idx_test]
     }
-    savemat(save_path + r"\test_results_over_V6.mat", data)
+    savemat(save_path + r"\test_results_over_V7.mat", data)

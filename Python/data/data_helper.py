@@ -14,23 +14,22 @@ def extract_data(path):
     XR = data['XR']
     XRd = data['XRd']
     YR = data['YR']
-    Ydoa = data['Ydoa']
     params = data['params']
 
-    return Xw, Yw, XR, XRd, YR, Ydoa, params
+    return Xw, Yw, XR, XRd, YR, params
 
 
-def create_dataloaders(XR, XRd, YR, Yw, Ydoa, batch_size=1024, test_size=0.2, val_size=0.1, random_state=42,
+def create_dataloaders(XR, XRd, YR, Yw, batch_size=1024, test_size=0.2, val_size=0.1, random_state=42,
                        num_workers=0):
     indices = np.arange(XR.shape[0])
 
     # Split the data into training and testing sets
-    XR_train, XR_test, XRd_train, XRd_test, YR_train, YR_test, Yw_train, Yw_test, Ydoa_train, Ydoa_test, idx_train, idx_test = (
-        train_test_split(XR, XRd, YR, Yw, Ydoa, indices, test_size=test_size, random_state=random_state))
+    XR_train, XR_test, XRd_train, XRd_test, YR_train, YR_test, Yw_train, Yw_test, idx_train, idx_test = (
+        train_test_split(XR, XRd, YR, Yw, indices, test_size=test_size, random_state=random_state))
 
     # Further split the training data into training and validation sets
-    XR_train, XR_val, XRd_train, XRd_val, YR_train, YR_val, Yw_train, Yw_val, Ydoa_train, Ydoa_val, idx_train, idx_val = (
-        train_test_split(XR_train, XRd_train, YR_train, Yw_train, Ydoa_train, idx_train,
+    XR_train, XR_val, XRd_train, XRd_val, YR_train, YR_val, Yw_train, Yw_val, idx_train, idx_val = (
+        train_test_split(XR_train, XRd_train, YR_train, Yw_train, idx_train,
                          test_size=val_size / (1 - test_size), random_state=random_state))
 
     # Create datasets
@@ -41,10 +40,6 @@ def create_dataloaders(XR, XRd, YR, Yw, Ydoa, batch_size=1024, test_size=0.2, va
     weights_train_dataset = WeightsDataset(Yw_train)
     weights_val_dataset = WeightsDataset(Yw_val)
     weights_test_dataset = WeightsDataset(Yw_test)
-
-    doa_train_dataset = DoaDataset(Ydoa_train)
-    doa_val_dataset = DoaDataset(Ydoa_val)
-    doa_test_dataset = DoaDataset(Ydoa_test)
 
     # Create dataloaders
     cov_train_loader = DataLoader(cov_train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
@@ -57,13 +52,10 @@ def create_dataloaders(XR, XRd, YR, Yw, Ydoa, batch_size=1024, test_size=0.2, va
     weights_test_loader = DataLoader(weights_test_dataset, batch_size=batch_size, shuffle=False,
                                      num_workers=num_workers)
 
-    doa_train_loader = DataLoader(doa_train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-    doa_val_loader = DataLoader(doa_val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
-    doa_test_loader = DataLoader(doa_test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+
 
     return (cov_train_loader, cov_val_loader, cov_test_loader,
             weights_train_loader, weights_val_loader, weights_test_loader,
-            doa_train_loader, doa_val_loader, doa_test_loader,
             idx_train, idx_val, idx_test)
 
 

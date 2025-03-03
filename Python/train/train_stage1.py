@@ -3,7 +3,6 @@ import os
 import time
 import numpy as np
 import torch
-import wandb
 
 from scipy.io import savemat
 
@@ -84,7 +83,6 @@ def train_and_val(model, train_loader, val_loader, criterion, optimizer, schedul
             train_losses.append(epoch_train_loss)
             print(f"Epoch {epoch + 1}, Train Loss: {epoch_train_loss}, Time: {time.time() - start_time:.2f} seconds")
 
-            # wandb.log({"epoch": epoch + 1, "train_loss": epoch_train_loss})
 
             # Run validation epoch if it's the appropriate interval
             if (epoch + 1) % val_interval == 0:
@@ -96,11 +94,6 @@ def train_and_val(model, train_loader, val_loader, criterion, optimizer, schedul
                 # Print validation loss and MAE
                 print(f"Epoch {epoch + 1}, Validation Loss: {epoch_val_loss}, MAE: {epoch_val_mae}, Time: {time.time() - start_time:.2f} seconds")
 
-                # wandb.log({
-                #     "epoch": epoch + 1,
-                #     "val_loss": epoch_val_loss,
-                #     "val_mae": epoch_val_mae
-                # })
 
                 # Check if the current validation loss is the best
                 if save_flag and epoch_val_loss < best_val_loss:
@@ -112,8 +105,6 @@ def train_and_val(model, train_loader, val_loader, criterion, optimizer, schedul
                         'scheduler_state_dict': scheduler.state_dict(),
                         'epoch': epoch + 1,
                     }, os.path.join(run_folder, "checkpoint_stage1.pth"))
-
-                # wandb.log({"best_val_loss": best_val_loss})
 
             # Step the scheduler
             scheduler.step()

@@ -52,5 +52,3 @@ class Stage1Network(nn.Module):
         x2_mat = x2.view(x.size(0), 4, 4)
         x = torch.cat((x1_mat.unsqueeze(1), x2_mat.unsqueeze(1)), dim=1)
         return x
-
-
